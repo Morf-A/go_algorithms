@@ -65,7 +65,37 @@ func exampleShortestDAGPath() {
 }
 
 func main() {
-	exampleShortestDAGPath()
+	v := graph.NewHeap()
+	v.Insert("a", 4)
+	v.Insert("b", 10)
+	v.Insert("c", 2)
+	v.Insert("d", 15)
+	v.Insert("e", 8)
+	v.Insert("f", 11)
+	v.Insert("g", 16)
+	v.Check()
+	v.Insert("h", 14)
+	v.Insert("i", 18)
+	v.Insert("j", 17)
+	fmt.Println(v.Array)
+	v.ExtractMin()
+	fmt.Println(v.Array)
+	v.Insert("k", 1)
+	v.ExtractMin()
+	v.Check()
+	v.DecreaceKey("l", 11)
+	v.Check()
+	v.ExtractMin()
+	v.Check()
+	fmt.Println(v.Array)
+	v.DecreaceKey("f", 3)
+	v.Check()
+	fmt.Println(v.Array)
+	v.ExtractMin()
+	fmt.Println(v.Array)
+	v.Check()
+	v.ExtractMin()
+	fmt.Println(v.Array)
 }
 
 func topologicalSort(g map[string][]string) []string {
