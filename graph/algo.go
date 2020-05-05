@@ -88,6 +88,32 @@ func revert(s []string) []string {
 	return s
 }
 
+func FloydWarshall(g *Graph) map[string]*Path {
+	paths := make(map[string]*Path)
+
+	for u, adj := range g.GetAdjList() {
+		paths[u] = NewPath(u)
+		for _, v := range adj {
+			if w, ok := g.Weigth[Edge{u, v}]; ok {
+				paths[u].Shortest[v] = w
+				paths[u].Pred[v] = u
+			}
+		}
+	}
+
+	// vertices := g.GetVertices()
+
+	// for n := 1; n < len(vertices); n++ {
+	// 	for _, u := range vertices {
+	// 		for _, v := range vertices {
+	// 			paths[u].Shortest[v]
+	// 		}
+	// 	}
+	// }
+
+	return paths
+}
+
 func BellmanFord(s string, g *Graph) *Path {
 	p := NewPath(s)
 

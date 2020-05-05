@@ -2,12 +2,86 @@ package main
 
 import (
 	"fmt"
+	"sort"
 
 	"./graph"
 )
 
 func main() {
-	exampleBellmanFord()
+	exampleFloydWarshall()
+}
+
+func exampleFloydWarshall() {
+	g := graph.NewGraph()
+	g.SetWeight("a", "b", 3)
+	g.SetWeight("a", "d", 8)
+	g.SetWeight("b", "c", 1)
+	g.SetWeight("d", "c", -5)
+	g.SetWeight("d", "b", 4)
+	g.SetWeight("c", "a", 2)
+
+	vertices := g.GetVertices()
+	sort.Strings(vertices)
+	fmt.Printf(" ")
+	for _, u := range vertices {
+		fmt.Printf("  %s", u)
+	}
+	fmt.Println()
+	for _, u := range vertices {
+		fmt.Printf("%s ", u)
+		for _, v := range vertices {
+			w, ok := g.Weigth[graph.Edge{u, v}]
+			if ok {
+				fmt.Printf("% 1d ", w)
+			} else {
+				fmt.Print(" ∞ ")
+			}
+		}
+		fmt.Println()
+	}
+
+	fmt.Println("-----------------")
+
+	paths := graph.FloydWarshall(g)
+
+	fmt.Printf(" ")
+	for _, u := range vertices {
+		fmt.Printf("  %s", u)
+	}
+	fmt.Println()
+	for _, u := range vertices {
+		fmt.Printf("%s ", u)
+		for _, v := range vertices {
+			w, ok := paths[u].Shortest[v]
+			if ok {
+				fmt.Printf("% 1d ", w)
+			} else {
+				fmt.Print(" ∞ ")
+			}
+		}
+		fmt.Println()
+	}
+
+	fmt.Println("=================")
+
+	fmt.Printf(" ")
+	for _, u := range vertices {
+		fmt.Printf("  %s", u)
+	}
+	fmt.Println()
+	for _, u := range vertices {
+		fmt.Printf("%s ", u)
+		for _, v := range vertices {
+			pred, ok := paths[u].Pred[v]
+			if ok {
+				fmt.Printf(" %s ", pred)
+			} else {
+				fmt.Print(" - ")
+			}
+		}
+		fmt.Println()
+	}
+
 }
 
 func exampleBellmanFord() {
