@@ -4,11 +4,41 @@ import (
 	"fmt"
 	"sort"
 
+	"./array"
 	"./graph"
 )
 
 func main() {
-	exampleFloydWarshall()
+	exampleBinarySearch()
+}
+
+func exampleBinarySearch() {
+	input := []int{1, 4, 6, 8, 9, 13, 16, 19, 30, 35, 48, 50, 51}
+
+	i := sort.Search(len(input), func(i int) bool { return input[i] >= 35 })
+	fmt.Printf("Number %d found at index %d\n", 35, i)
+
+	i = array.BinarySearch(input, 35)
+	fmt.Printf("Number %d found at index %d\n", 35, i)
+
+	i = array.Search(len(input), func(i int) bool { return input[i] >= 35 })
+	fmt.Printf("Number %d found at index %d\n", 35, i)
+
+	i = array.BinarySearch(input, 8)
+	fmt.Printf("Number %d found at index %d\n", 8, i)
+
+	i = array.BinarySearch(input, 5)
+	fmt.Printf("Number %d found at index %d\n", 5, i)
+
+	i = array.BinarySearchRec(input, 35, 0, len(input)-1)
+	fmt.Printf("Number %d found at index %d\n", 35, i)
+
+	i = array.BinarySearchRec(input, 8, 0, len(input)-1)
+	fmt.Printf("Number %d found at index %d\n", 8, i)
+
+	i = array.BinarySearchRec(input, 5, 0, len(input)-1)
+	fmt.Printf("Number %d found at index %d\n", 5, i)
+
 }
 
 func exampleFloydWarshall() {
