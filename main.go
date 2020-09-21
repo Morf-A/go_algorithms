@@ -9,7 +9,21 @@ import (
 )
 
 func main() {
-	exampleBinarySearch()
+	exampleInsertionSort()
+}
+
+func exampleInsertionSort() {
+	input := []int{4, 7, 1, 0, 1, -5, 2, 2, 100, -8}
+	fmt.Println(input)
+	array.InsertionSort(input)
+	fmt.Println(input)
+}
+
+func exampleSelectionSort() {
+	input := []int{4, 7, 1, 0, 1, -5, 2, 2, 100, -8}
+	fmt.Println(input)
+	array.SelectionSort(input)
+	fmt.Println(input)
 }
 
 func exampleBinarySearch() {
