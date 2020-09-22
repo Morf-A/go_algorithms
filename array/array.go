@@ -55,6 +55,31 @@ func Merge(arr []int, p, q, r int) {
 	}
 }
 
+func QuickSort(arr []int) {
+	DoQuickSort(arr, 0, len(arr)-1)
+}
+
+func DoQuickSort(arr []int, p, r int) {
+	if p >= r {
+		return
+	}
+	q := Partition(arr, p, r)
+	DoQuickSort(arr, p, q-1)
+	DoQuickSort(arr, q+1, r)
+}
+
+func Partition(arr []int, p, r int) int {
+	q := p
+	for u := p; u < r-1; u++ {
+		if arr[u] < arr[r] {
+			arr[q], arr[u] = arr[u], arr[q]
+			q++
+		}
+	}
+	arr[q], arr[r] = arr[r], arr[q]
+	return q
+}
+
 func InsertionSort(arr []int) {
 	n := len(arr)
 	for i := 1; i < n; i++ {

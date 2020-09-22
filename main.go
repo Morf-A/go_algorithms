@@ -9,7 +9,19 @@ import (
 )
 
 func main() {
-	exampleMergeSort()
+	exampleQuickSort()
+}
+
+func exampleQuickSort() {
+	toPartition := []int{4, 7, 1, 0, 1, -5, 2, 2, 100, -8, 3}
+	fmt.Println(toPartition)
+	q := array.Partition(toPartition, 0, len(toPartition)-1)
+	fmt.Println(q, toPartition)
+	fmt.Println("-------------")
+	input := []int{4, 7, 1, 0, 1, -5, 2, 2, 100, -8}
+	fmt.Println(input)
+	array.QuickSort(input)
+	fmt.Println(input)
 }
 
 func exampleMergeSort() {
