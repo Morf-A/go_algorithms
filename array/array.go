@@ -13,6 +13,48 @@ func Search(n int, f func(int) bool) int {
 	return r
 }
 
+func MergeSort(arr []int) {
+	DoMergeSort(arr, 0, len(arr)-1)
+}
+
+func DoMergeSort(arr []int, p, r int) {
+	if p >= r {
+		return
+	}
+	q := (p + r) / 2
+	DoMergeSort(arr, p, q)
+	DoMergeSort(arr, q+1, r)
+	Merge(arr, p, q, r)
+}
+
+func Merge(arr []int, p, q, r int) {
+	one := make([]int, q-p+1)
+	two := make([]int, r-q)
+	copy(one, arr[p:q+1])
+	copy(two, arr[q+1:r+1])
+	i, j, k := 0, 0, p
+	for i < len(one) && j < len(two) {
+		if one[i] < two[j] {
+			arr[k] = one[i]
+			i++
+		} else {
+			arr[k] = two[j]
+			j++
+		}
+		k++
+	}
+	for i < len(one) {
+		arr[k] = one[i]
+		i++
+		k++
+	}
+	for j < len(two) {
+		arr[k] = two[j]
+		j++
+		k++
+	}
+}
+
 func InsertionSort(arr []int) {
 	n := len(arr)
 	for i := 1; i < n; i++ {

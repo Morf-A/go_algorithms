@@ -9,7 +9,20 @@ import (
 )
 
 func main() {
-	exampleInsertionSort()
+	exampleMergeSort()
+}
+
+func exampleMergeSort() {
+	toMerge := []int{-1, 1, 3, 5, 9, 10, 2, 4, 6, -1}
+	fmt.Println(toMerge)
+	array.Merge(toMerge, 1, 5, 8)
+	fmt.Println(toMerge)
+	fmt.Println("-------------")
+
+	input := []int{4, 7, 1, 0, 1, -5, 2, 2, 100, -8}
+	fmt.Println(input)
+	array.MergeSort(input)
+	fmt.Println(input)
 }
 
 func exampleInsertionSort() {
