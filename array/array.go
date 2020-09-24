@@ -1,5 +1,9 @@
 package array
 
+import (
+	"errors"
+)
+
 func Search(n int, f func(int) bool) int {
 	p, r := 0, n
 	for p < r {
@@ -11,6 +15,59 @@ func Search(n int, f func(int) bool) int {
 		}
 	}
 	return r
+}
+
+func RadixSort(arr []string, n int) error {
+	maxCode := 126
+	for p := n - 1; p >= 0; p-- {
+		equal := make([]int, maxCode+1)
+		for _, s := range arr {
+			key := []rune(s)[p]
+			if int(key) > maxCode {
+				return errors.New("char key > max code")
+			}
+			equal[key]++
+		}
+		less := make([]int, maxCode+1)
+		for i := 1; i < len(less); i++ {
+			less[i] = less[i-1] + equal[i-1]
+		}
+		res := make([]string, len(arr))
+		for _, s := range arr {
+			key := []rune(s)[p]
+			res[less[key]] = s
+			less[key]++
+		}
+		copy(arr, res)
+	}
+	return nil
+}
+
+func CountingSort(arr []int) error {
+	max := 0
+	for _, a := range arr {
+		if a < 0 || a > 1000 {
+			return errors.New("only elements > 0 and < 1000 allowed")
+		}
+		if a > max {
+			max = a
+		}
+	}
+	equal := make([]int, max+1)
+	for _, a := range arr {
+		equal[a]++
+	}
+	less := make([]int, max+1)
+	for i := 1; i < len(less); i++ {
+		less[i] = less[i-1] + equal[i-1]
+	}
+	res := make([]int, len(arr))
+	for _, a := range arr {
+		res[less[a]] = a
+		less[a]++
+	}
+	copy(arr, res)
+	return nil
 }
 
 func MergeSort(arr []int) {

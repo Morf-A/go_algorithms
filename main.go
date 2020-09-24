@@ -9,7 +9,25 @@ import (
 )
 
 func main() {
-	exampleQuickSort()
+	exampleRadixSort()
+}
+
+func exampleRadixSort() {
+	input := []string{"XI7FS6", "PL4ZQ2", "JI8FR9", "XL8FQ6", "PY2ZR5", "KV7WS9", "JL2ZV3", "KI4WR2"}
+	fmt.Println(input)
+	if err := array.RadixSort(input, 6); err != nil {
+		panic(err)
+	}
+	fmt.Println(input)
+}
+
+func exampleCountingSort() {
+	input := []int{3, 6, 0, 2, 3, 0, 5, 6, 0, 3, 3, 2, 4}
+	fmt.Println(input)
+	if err := array.CountingSort(input); err != nil {
+		panic(err)
+	}
+	fmt.Println(input)
 }
 
 func exampleQuickSort() {
