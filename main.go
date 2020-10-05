@@ -6,10 +6,16 @@ import (
 
 	"./array"
 	"./graph"
+	"./str"
 )
 
 func main() {
-	exampleRadixSort()
+	exampleMaxSequence()
+}
+
+func exampleMaxSequence() {
+	max := str.SlowMaxSequence("CATCGA", "GTACCGTCA")
+	fmt.Println(max)
 }
 
 func exampleRadixSort() {
