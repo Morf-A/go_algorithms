@@ -1,16 +1,18 @@
 package graph
 
 type Graph struct {
-	adjList map[string][]string
-	Weigth  map[Edge]int
+	adjList     map[string][]string
+	Weigth      map[Edge]int
+	VerticesSet map[string]bool
 }
 
 type Edge [2]string
 
 func NewGraph() *Graph {
 	g := &Graph{
-		adjList: make(map[string][]string),
-		Weigth:  make(map[Edge]int),
+		adjList:     make(map[string][]string),
+		Weigth:      make(map[Edge]int),
+		VerticesSet: make(map[string]bool),
 	}
 	return g
 }
@@ -24,20 +26,17 @@ func (g Graph) GetAdjList() map[string][]string {
 }
 
 func (g Graph) SetWeight(u, v string, w int) {
-	g.adjList[u] = append(g.adjList[u], v)
+	if _, ok := g.Weigth[Edge{u, v}]; !ok {
+		g.adjList[u] = append(g.adjList[u], v)
+		g.VerticesSet[u] = true
+		g.VerticesSet[v] = true
+	}
 	g.Weigth[Edge{u, v}] = w
 }
 
 func (g Graph) GetVertices() []string {
 	var res []string
-	m := make(map[string]bool)
-	for u, list := range g.adjList {
-		m[u] = true
-		for _, v := range list {
-			m[v] = true
-		}
-	}
-	for u := range m {
+	for u := range g.VerticesSet {
 		res = append(res, u)
 	}
 	return res

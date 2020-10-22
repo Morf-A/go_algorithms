@@ -36,8 +36,9 @@ func TopologicalSort(g map[string][]string) []string {
 
 func GetShortestDAGPath(s string, g *Graph) *Path {
 	p := NewPath(s)
-	for _, u := range TopologicalSort(g.GetAdjList()) {
-		for _, v := range g.GetAdjList()[u] {
+	adjList := g.GetAdjList()
+	for _, u := range TopologicalSort(adjList) {
+		for _, v := range adjList[u] {
 			p.Relax(u, v, g.GetWeight(u, v))
 		}
 	}

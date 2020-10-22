@@ -37,12 +37,12 @@ func (p *Path) Print(to string) {
 	fmt.Print("to ", to, ": ")
 	var predList []string
 	for {
-		next, ok := p.Pred[to]
+		pred, ok := p.Pred[to]
 		if !ok {
 			break
 		}
 		predList = append(predList, to)
-		to = next
+		to = pred
 	}
 
 	if len(predList) == 0 {
