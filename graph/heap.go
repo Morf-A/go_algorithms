@@ -18,8 +18,7 @@ type Heap struct {
 }
 
 func NewHeap() *Heap {
-	h := &Heap{Lookup: make(map[string]int)}
-	return h
+	return &Heap{Lookup: make(map[string]int)}
 }
 
 func (hptr *Heap) Check() {
@@ -66,7 +65,7 @@ func (hptr *Heap) doInsert(value string, key int) {
 	hptr.moveUP(last)
 }
 
-func (hptr *Heap) DecreaceTo(val string, n int) {
+func (hptr *Heap) DecreaseTo(val string, n int) {
 	i := hptr.Lookup[val]
 	if hptr.Array[i].Key < n {
 		panic(fmt.Sprintf("new value must be less on equal than old value, but %d < %d", hptr.Array[i].Key, n))
@@ -86,9 +85,10 @@ func (hptr *Heap) ExtractMin() (string, bool) {
 		return "", false
 	}
 	res := hptr.Array[0].Value
-	hptr.swap(len(hptr.Array)-1, 0)
-	delete(hptr.Lookup, hptr.Array[len(hptr.Array)-1].Value)
-	hptr.Array = hptr.Array[:len(hptr.Array)-1]
+	last := len(hptr.Array) - 1
+	hptr.swap(last, 0)
+	delete(hptr.Lookup, hptr.Array[last].Value)
+	hptr.Array = hptr.Array[:last]
 	hptr.moveDown(0)
 	return res, true
 }

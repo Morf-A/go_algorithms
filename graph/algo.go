@@ -147,7 +147,7 @@ func Dijkstra(s string, g *Graph) *Path {
 		}
 		for _, v := range adjList[u] {
 			if new, changed := p.Relax(u, v, g.GetWeight(u, v)); changed {
-				h.DecreaceTo(v, new)
+				h.DecreaseTo(v, new)
 			}
 		}
 	}
