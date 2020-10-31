@@ -26,8 +26,8 @@ func (hptr *Heap) Check() {
 	l := len(hptr.Array)
 	for {
 		j := 2 * i
-		if j >= l {
-			j = l
+		if j > l {
+			break
 		}
 		if hptr.Array[i-1].Key > hptr.Array[j-1].Key {
 			log.Println("wrong ", i, j, hptr.Array[i-1], hptr.Array[j-1])
@@ -80,11 +80,11 @@ func (hptr *Heap) DecreaceKey(val string, n int) {
 	hptr.moveUP(i)
 }
 
-func (hptr *Heap) ExtractMin() (string, bool) {
+func (hptr *Heap) ExtractMin() (Vertex, bool) {
 	if len(hptr.Array) == 0 {
-		return "", false
+		return Vertex{}, false
 	}
-	res := hptr.Array[0].Value
+	res := hptr.Array[0]
 	last := len(hptr.Array) - 1
 	hptr.swap(last, 0)
 	delete(hptr.Lookup, hptr.Array[last].Value)

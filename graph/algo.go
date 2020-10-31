@@ -141,10 +141,11 @@ func Dijkstra(s string, g *Graph) *Path {
 	}
 	adjList := g.GetAdjList()
 	for {
-		u, ok := h.ExtractMin()
+		vertex, ok := h.ExtractMin()
 		if !ok {
 			break
 		}
+		u := vertex.Value
 		for _, v := range adjList[u] {
 			if new, changed := p.Relax(u, v, g.GetWeight(u, v)); changed {
 				h.DecreaseTo(v, new)

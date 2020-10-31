@@ -35,6 +35,13 @@ func ExampleQuickSort() {
 	fmt.Println(input)
 }
 
+func ExampleHeapSort() {
+	input := []int{4, 7, 1, 0, 1, -5, 2, 2, 100, -8}
+	fmt.Println(input)
+	HeapSort(input)
+	fmt.Println(input)
+}
+
 func ExampleMergeSort() {
 	toMerge := []int{-1, 1, 3, 5, 9, 10, 2, 4, 6, -1}
 	fmt.Println(toMerge)

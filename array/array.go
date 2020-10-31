@@ -1,6 +1,7 @@
 package array
 
 import (
+	"algorithms/graph"
 	"errors"
 )
 
@@ -41,6 +42,20 @@ func RadixSort(arr []string, n int) error {
 		copy(arr, res)
 	}
 	return nil
+}
+
+func HeapSort(arr []int) {
+	h := graph.NewHeap()
+	for _, a := range arr {
+		h.Insert("", a)
+	}
+	for i := 0; i < len(arr); i++ {
+		vertex, ok := h.ExtractMin()
+		if !ok {
+			panic("Unexpected end of heap")
+		}
+		arr[i] = vertex.Key
+	}
 }
 
 func CountingSort(arr []int) error {
