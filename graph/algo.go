@@ -45,34 +45,42 @@ func GetShortestDAGPath(s string, g *Graph) *Path {
 	return p
 }
 
-func FindNegativeCycle(g *Graph, p *Path) []string {
-	cyclePathEnd := ""
+func FindNegativeCycle(g *Graph, start string) []string {
+	p := BellmanFord(start, g)
+	//find cycle tail (can be outside)
+	var cycleTail string
 	for u, adj := range g.GetAdjList() {
 		for _, v := range adj {
 			if _, changed := p.Relax(u, v, g.GetWeight(u, v)); changed {
-				cyclePathEnd = v
+				cycleTail = v
+				break
 			}
 		}
 	}
-	if cyclePathEnd == "" {
+	if cycleTail == "" {
 		return nil
 	}
-	v := cyclePathEnd
+	//find cycle end
 	visited := make(map[string]bool)
-	visited[v] = true
-	var cycle []string
+	var cycleEnd string
+	v := cycleTail
 	for {
-		v = p.Pred[v]
 		if visited[v] {
-			cycle = append(cycle, v)
-			pred := p.Pred[v]
-			for v != pred {
-				cycle = append(cycle, pred)
-				pred = p.Pred[pred]
-			}
+			cycleEnd = v
 			break
 		}
 		visited[v] = true
+		v = p.Pred[v]
+	}
+	//find cycle
+	var cycle []string
+	v = cycleEnd
+	for {
+		cycle = append(cycle, v)
+		v = p.Pred[v]
+		if v == cycleEnd {
+			break
+		}
 	}
 	revert(cycle)
 	return cycle

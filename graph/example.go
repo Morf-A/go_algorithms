@@ -92,6 +92,20 @@ func ExampleFloydWarshall() {
 
 }
 
+func ExampleFindNegativeCycle() {
+	g := NewGraph()
+	g.SetWeight("e", "h", 1)
+	g.SetWeight("a", "b", 1)
+	g.SetWeight("b", "c", 1)
+	g.SetWeight("c", "d", 1)
+	g.SetWeight("d", "e", -2)
+	g.SetWeight("e", "b", -2)
+	g.SetWeight("d", "f", 1)
+	g.SetWeight("f", "g", 1)
+	cycle := FindNegativeCycle(g, "a")
+	fmt.Println(cycle)
+}
+
 func ExampleBellmanFord() {
 	g := NewGraph()
 	g.SetWeight("s", "t", 6)
@@ -113,13 +127,6 @@ func ExampleBellmanFord() {
 			fmt.Println()
 		}
 	}
-	fmt.Print("----------------------------\n")
-	g.SetWeight("t", "s", -4)
-
-	newPath := BellmanFord(start, g)
-	cycle := FindNegativeCycle(g, newPath)
-	fmt.Println(cycle)
-
 }
 
 func ExampleDijkstra() {
