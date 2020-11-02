@@ -2,7 +2,7 @@ package graph
 
 import (
 	"fmt"
-	"sort"
+	"strconv"
 )
 
 func ExcampleTolopogicalSort() {
@@ -28,68 +28,33 @@ func ExampleFloydWarshall() {
 	g.SetWeight("d", "b", 4)
 	g.SetWeight("c", "a", 2)
 
-	vertices := g.GetVertices()
-	sort.Strings(vertices)
-	fmt.Printf(" ")
-	for _, u := range vertices {
-		fmt.Printf("  %s", u)
-	}
-	fmt.Println()
-	for _, u := range vertices {
-		fmt.Printf("%s ", u)
-		for _, v := range vertices {
-			w, ok := g.Weigth[Edge{u, v}]
-			if ok {
-				fmt.Printf("% 1d ", w)
-			} else {
-				fmt.Print(" ∞ ")
-			}
+	fmt.Print("-------Adjacency---------\n\n")
+	PrintMap(g.GetVertices(), func(u, v string) string {
+		w, ok := g.Weigth[Edge{u, v}]
+		if !ok {
+			return "∞"
 		}
-		fmt.Println()
-	}
-
-	fmt.Println("-----------------")
+		return strconv.Itoa(w)
+	})
 
 	paths := FloydWarshall(g)
-
-	fmt.Printf(" ")
-	for _, u := range vertices {
-		fmt.Printf("  %s", u)
-	}
-	fmt.Println()
-	for _, u := range vertices {
-		fmt.Printf("%s ", u)
-		for _, v := range vertices {
-			w, ok := paths[u].Shortest[v]
-			if ok {
-				fmt.Printf("% 1d ", w)
-			} else {
-				fmt.Print(" ∞ ")
-			}
+	fmt.Print("\n-------Shortest----------\n\n")
+	PrintMap(g.GetVertices(), func(u, v string) string {
+		s, ok := paths[u].Shortest[v]
+		if !ok {
+			return "∞"
 		}
-		fmt.Println()
-	}
+		return strconv.Itoa(s)
+	})
+	fmt.Print("\n-------Previous----------\n\n")
 
-	fmt.Println("=================")
-
-	fmt.Printf(" ")
-	for _, u := range vertices {
-		fmt.Printf("  %s", u)
-	}
-	fmt.Println()
-	for _, u := range vertices {
-		fmt.Printf("%s ", u)
-		for _, v := range vertices {
-			pred, ok := paths[u].Pred[v]
-			if ok {
-				fmt.Printf(" %s ", pred)
-			} else {
-				fmt.Print(" - ")
-			}
+	PrintMap(g.GetVertices(), func(u, v string) string {
+		p, ok := paths[u].Pred[v]
+		if !ok {
+			return " -"
 		}
-		fmt.Println()
-	}
-
+		return " " + p
+	})
 }
 
 func ExampleFindNegativeCycle() {
