@@ -107,31 +107,38 @@ func IntLeghth(i int) int {
 	return len([]byte(strconv.Itoa(i)))
 }
 
-func PrintAdjMap(g *Graph) {
-	maxLen := 0
-	for _, w := range g.Weigth {
-		wLength := IntLeghth(w)
-		if maxLen < IntLeghth(w) {
-			maxLen = wLength
+func PrintMap(vertices []string, get func(u, v string) string) {
+	maxValLen := 0
+	maxVerLen := 0
+	for _, u := range vertices {
+		verLen := len([]rune(u))
+		if maxVerLen < verLen {
+			maxVerLen = verLen
+		}
+		for _, v := range vertices {
+			valLen := len([]rune(get(u, v)))
+			if maxValLen < valLen {
+				maxValLen = valLen
+			}
 		}
 	}
-	format := "% " + strconv.Itoa(maxLen+1) + "s" // for example, "% 5s"
-	vertices := g.GetVertices()
+
+	if maxValLen < maxVerLen {
+		maxValLen = maxVerLen
+	}
+
+	valFormat := "% " + strconv.Itoa(maxValLen+1) + "s" // for example, "% 5s"
+	verFormat := "% " + strconv.Itoa(maxVerLen) + "s"
 	sort.Strings(vertices)
-	fmt.Printf(" ")
+	fmt.Printf(verFormat, " ")
 	for _, u := range vertices {
-		fmt.Printf(format, u)
+		fmt.Printf(valFormat, u)
 	}
 	fmt.Println()
 	for _, u := range vertices {
-		fmt.Printf("%s", u)
+		fmt.Printf(verFormat, u)
 		for _, v := range vertices {
-			w, ok := g.Weigth[Edge{u, v}]
-			if ok {
-				fmt.Printf(format, strconv.Itoa(w))
-			} else {
-				fmt.Printf(format, "∞")
-			}
+			fmt.Printf(valFormat, get(u, v))
 		}
 		fmt.Println()
 	}
