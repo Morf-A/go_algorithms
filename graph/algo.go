@@ -1,5 +1,11 @@
 package graph
 
+import (
+	"fmt"
+	"sort"
+	"strconv"
+)
+
 func TopologicalSort(g map[string][]string) []string {
 	inDegree := make(map[string]int, len(g))
 	var next ListP
@@ -95,6 +101,40 @@ func revert(s []string) []string {
 		j--
 	}
 	return s
+}
+
+func IntLeghth(i int) int {
+	return len([]byte(strconv.Itoa(i)))
+}
+
+func PrintAdjMap(g *Graph) {
+	maxLen := 0
+	for _, w := range g.Weigth {
+		wLength := IntLeghth(w)
+		if maxLen < IntLeghth(w) {
+			maxLen = wLength
+		}
+	}
+	format := "% " + strconv.Itoa(maxLen+1) + "s" // for example, "% 5s"
+	vertices := g.GetVertices()
+	sort.Strings(vertices)
+	fmt.Printf(" ")
+	for _, u := range vertices {
+		fmt.Printf(format, u)
+	}
+	fmt.Println()
+	for _, u := range vertices {
+		fmt.Printf("%s", u)
+		for _, v := range vertices {
+			w, ok := g.Weigth[Edge{u, v}]
+			if ok {
+				fmt.Printf(format, strconv.Itoa(w))
+			} else {
+				fmt.Printf(format, "∞")
+			}
+		}
+		fmt.Println()
+	}
 }
 
 func FloydWarshall(g *Graph) map[string]*Path {
