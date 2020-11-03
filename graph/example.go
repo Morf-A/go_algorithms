@@ -30,7 +30,7 @@ func ExampleFloydWarshall() {
 
 	fmt.Print("-------Adjacency---------\n\n")
 	PrintMap(g.GetVertices(), func(u, v string) string {
-		w, ok := g.Weigth[Edge{u, v}]
+		w, ok := g.Weight[Edge{u, v}]
 		if !ok {
 			return "∞"
 		}
