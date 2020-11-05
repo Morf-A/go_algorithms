@@ -146,9 +146,11 @@ func PrintMap(vertices []string, get func(u, v string) string) {
 
 func FloydWarshall(g *Graph) map[string]*Path {
 	paths := make(map[string]*Path)
-
-	for u, adj := range g.GetAdjList() {
+	vertices := g.GetVertices()
+	for _, u := range vertices {
 		paths[u] = NewPath(u)
+	}
+	for u, adj := range g.GetAdjList() {
 		for _, v := range adj {
 			if w, ok := g.Weight[Edge{u, v}]; ok {
 				paths[u].Shortest[v] = w
@@ -157,7 +159,6 @@ func FloydWarshall(g *Graph) map[string]*Path {
 		}
 	}
 
-	vertices := g.GetVertices()
 	for _, x := range vertices {
 		for _, u := range vertices {
 			for _, v := range vertices {
