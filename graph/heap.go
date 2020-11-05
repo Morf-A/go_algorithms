@@ -3,9 +3,8 @@ package graph
 import (
 	"fmt"
 	"log"
+	"math"
 )
-
-const Inf = 9223372036854775807
 
 type Vertex struct {
 	Key   int
@@ -47,11 +46,11 @@ func (hptr *Heap) Check() {
 }
 
 func (hptr *Heap) InsertInf(value string) {
-	hptr.doInsert(value, Inf)
+	hptr.doInsert(value, math.MaxInt64)
 }
 
 func (hptr *Heap) Insert(value string, key int) {
-	if key == Inf {
+	if key == math.MaxInt64 {
 		panic("can`t use max int as key, cause it used as inf value")
 	}
 	hptr.doInsert(value, key)
