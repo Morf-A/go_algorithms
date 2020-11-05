@@ -150,23 +150,28 @@ func FloydWarshall(g *Graph) map[string]*Path {
 	for u, adj := range g.GetAdjList() {
 		paths[u] = NewPath(u)
 		for _, v := range adj {
-			if w, ok := g.Weigth[Edge{u, v}]; ok {
+			if w, ok := g.Weight[Edge{u, v}]; ok {
 				paths[u].Shortest[v] = w
 				paths[u].Pred[v] = u
 			}
 		}
 	}
 
-	// vertices := g.GetVertices()
-
-	// for n := 1; n < len(vertices); n++ {
-	// 	for _, u := range vertices {
-	// 		for _, v := range vertices {
-	// 			paths[u].Shortest[v]
-	// 		}
-	// 	}
-	// }
-
+	vertices := g.GetVertices()
+	sort.Strings(vertices)
+	for _, x := range vertices {
+		for _, u := range vertices {
+			for _, v := range vertices {
+				uv, uvOk := paths[u].Shortest[v]
+				ux, uxOk := paths[u].Shortest[x]
+				xv, xvOk := paths[x].Shortest[v]
+				if uxOk && xvOk && (!uvOk || (ux+xv < uv)) {
+					paths[u].Shortest[v] = ux + xv
+					paths[u].Pred[v] = x
+				}
+			}
+		}
+	}
 	return paths
 }
 

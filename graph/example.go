@@ -22,14 +22,17 @@ func ExcampleTolopogicalSort() {
 func ExampleFloydWarshall() {
 	g := NewGraph()
 	g.SetWeight("a", "b", 3)
-	g.SetWeight("a", "d", 8)
-	g.SetWeight("b", "c", 1)
+	g.SetWeight("a", "c", 8)
+	g.SetWeight("b", "d", 1)
+	g.SetWeight("c", "b", 4)
+	g.SetWeight("d", "a", 2)
 	g.SetWeight("d", "c", -5)
-	g.SetWeight("d", "b", 4)
-	g.SetWeight("c", "a", 2)
 
 	fmt.Print("-------Adjacency---------\n\n")
 	PrintMap(g.GetVertices(), func(u, v string) string {
+		if u == v {
+			return "0"
+		}
 		w, ok := g.Weight[Edge{u, v}]
 		if !ok {
 			return "∞"
