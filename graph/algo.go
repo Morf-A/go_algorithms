@@ -158,16 +158,11 @@ func FloydWarshall(g *Graph) map[string]*Path {
 	}
 
 	vertices := g.GetVertices()
-	sort.Strings(vertices)
 	for _, x := range vertices {
 		for _, u := range vertices {
 			for _, v := range vertices {
-				uv, uvOk := paths[u].Shortest[v]
-				ux, uxOk := paths[u].Shortest[x]
-				xv, xvOk := paths[x].Shortest[v]
-				if uxOk && xvOk && (!uvOk || (ux+xv < uv)) {
-					paths[u].Shortest[v] = ux + xv
-					paths[u].Pred[v] = x
+				if xv, ok := g.Weight[Edge{x, v}]; ok {
+					paths[u].Relax(x, v, xv)
 				}
 			}
 		}
