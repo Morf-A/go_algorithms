@@ -1,6 +1,8 @@
 package str
 
-func SlowMaxSequence(a, b string) string {
+import "fmt"
+
+func GetLCS(a, b string) string {
 	sA := toSequences2(a)
 	sB := toSequences(b)
 	var max string
@@ -63,4 +65,29 @@ func toSequences(str string) []string {
 	var s Store
 	doToSequences(str, 0, len([]byte(str)), &s)
 	return s.Arr
+}
+
+func GetLCSMap(xStr, yStr string) [][]int {
+	x := []byte(xStr)
+	y := []byte(yStr)
+	lenX := len(x)
+	lenY := len(y)
+	l := make([][]int, lenX)
+	for i := 0; i < lenX; i++ {
+		l[i] = make([]int, lenY)
+	}
+	fmt.Println(l)
+
+	for i := 1; i < lenX; i++ {
+		for j := 1; j < lenY; j++ {
+			if x[i] == y[j] {
+				l[i][j] = l[i-1][j-1] + 1
+			} else if l[i-1][j] > l[i][j-1] {
+				l[i][j] = l[i-1][j]
+			} else {
+				l[i][j] = l[i][j-1]
+			}
+		}
+	}
+	return l
 }
