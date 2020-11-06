@@ -1,8 +1,6 @@
 package str
 
-import "fmt"
-
-func GetLCS(a, b string) string {
+func GetLCSSlow(a, b string) string {
 	sA := toSequences2(a)
 	sB := toSequences(b)
 	var max string
@@ -67,17 +65,47 @@ func toSequences(str string) []string {
 	return s.Arr
 }
 
-func GetLCSMap(xStr, yStr string) [][]int {
+func GetLCS(xStr, yStr string) string {
 	x := []byte(xStr)
 	y := []byte(yStr)
+	l := getLCSMap(x, y)
+	i := len(x)
+	j := len(y)
+	var res []byte
+	for i > 0 && j > 0 {
+		if x[i-1] == y[j-1] {
+			res = append(res, x[i-1])
+			i--
+			j--
+			continue
+		}
+		if l[i][j-1] >= l[i-1][j] {
+			j--
+		} else {
+			i--
+		}
+	}
+	return string(revertBytes(res))
+}
+
+func revertBytes(b []byte) []byte {
+	i := 0
+	j := len(b) - 1
+	for i < j {
+		b[i], b[j] = b[j], b[i]
+		i++
+		j--
+	}
+	return b
+}
+
+func getLCSMap(x, y []byte) [][]int {
 	lenX := len(x)
 	lenY := len(y)
 	l := make([][]int, lenX)
 	for i := 0; i < lenX; i++ {
 		l[i] = make([]int, lenY)
 	}
-	fmt.Println(l)
-
 	for i := 1; i < lenX; i++ {
 		for j := 1; j < lenY; j++ {
 			if x[i] == y[j] {
