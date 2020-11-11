@@ -25,5 +25,12 @@ func ExampleFindSubstrings() {
 }
 
 func ExampleGetTransforms() {
-	fmt.Println(GetTransforms("ACAAGC", "CCGT"))
+	trs := GetTransforms("ACAAGC", "CCGT")
+	for _, tr := range trs {
+		args := []string{}
+		for _, a := range tr.Args {
+			args = append(args, string(a))
+		}
+		fmt.Print(tr.Op, args, "(", tr.Cost, ")\n")
+	}
 }

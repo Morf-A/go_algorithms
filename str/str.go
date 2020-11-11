@@ -124,9 +124,7 @@ func getLCSMap(x, y []byte) [][]int {
 	return l
 }
 
-//find all substrings with finite automaton
-func FindSubstringsFA(needleStr, haystackStr string) []int {
-	needle, haystack := []byte(needleStr), []byte(haystackStr)
+func getNeedleFA(needle []byte) map[byte][]int {
 	nextState := make(map[byte][]int)
 	for _, n := range needle {
 		if _, ok := nextState[n]; ok {
@@ -149,6 +147,13 @@ func FindSubstringsFA(needleStr, haystackStr string) []int {
 			}
 		}
 	}
+	return nextState
+}
+
+//find all substrings with finite automaton
+func FindSubstringsFA(needleStr, haystackStr string) []int {
+	needle, haystack := []byte(needleStr), []byte(haystackStr)
+	nextState := getNeedleFA(needle)
 	var (
 		res []int
 		s   int
@@ -187,22 +192,104 @@ func FindSubstrings(needleStr, haystackStr string) []int {
 	return res
 }
 
-type Operation struct {
-	Type string
+type Transform struct {
+	Op   string
+	Args []byte
 	Cost int
 }
 
-type Transform struct {
-	Op   Operation
-	Args []byte
+func getTransformMap(x, y []byte) [][]Transform {
+	cost := map[string]int{
+		"none": 0,
+		"ins":  2,
+		"del":  2,
+		"repl": 1,
+		"copy": -1,
+	}
+
+	tr := make([][]Transform, len(x)+1)
+
+	tr[0] = make([]Transform, len(y)+1)
+	tr[0][0] = Transform{Op: "none"}
+
+	for j := 1; j <= len(y); j++ {
+		tr[0][j] = Transform{
+			Op:   "ins",
+			Cost: tr[0][j-1].Cost + cost["ins"],
+			Args: []byte{y[j-1]},
+		}
+	}
+
+	for i := 1; i <= len(x); i++ {
+		tr[i] = make([]Transform, len(y)+1)
+		tr[i][0] = Transform{
+			Op:   "del",
+			Cost: tr[i-1][0].Cost + cost["del"],
+			Args: []byte{x[i-1]},
+		}
+	}
+
+	for i := 1; i <= len(x); i++ {
+		for j := 1; j <= len(y); j++ {
+			if x[i-1] == y[j-1] {
+				tr[i][j] = Transform{
+					Op:   "copy",
+					Cost: tr[i-1][j-1].Cost + cost["copy"],
+					Args: []byte{x[i-1]},
+				}
+			} else {
+				tr[i][j] = Transform{
+					Op:   "repl",
+					Cost: tr[i-1][j-1].Cost + cost["repl"],
+					Args: []byte{x[i-1], y[j-1]},
+				}
+			}
+
+			if (tr[i-1][j].Cost + cost["del"]) < tr[i][j].Cost {
+				tr[i][j] = Transform{
+					Op:   "del",
+					Cost: tr[i-1][j].Cost + cost["del"],
+					Args: []byte{x[i-1]},
+				}
+			}
+
+			if (tr[i][j-1].Cost + cost["ins"]) < tr[i][j].Cost {
+				tr[i][j] = Transform{
+					Op:   "ins",
+					Cost: tr[i][j-1].Cost + cost["ins"],
+					Args: []byte{y[j-1]},
+				}
+			}
+		}
+	}
+	return tr
 }
 
 func GetTransforms(xStr, yStr string) []Transform {
-	// OpDel := Operation{"delete", 2}
-	// OpIns := Operation{"insert", 2}
-	// OpCopy := Operation{"copy", -1}
-	// OpRepl := Operation{"replace", 1}
-	// x, y := []byte(xStr), []byte(yStr)
-	// for i := 0
-	return nil
+	x, y := []byte(xStr), []byte(yStr)
+	tr := getTransformMap(x, y)
+	i := len(x)
+	j := len(y)
+	var res []Transform
+	for i > 0 || j > 0 {
+		res = append(res, tr[i][j])
+		if tr[i][j].Op == "copy" || tr[i][j].Op == "repl" {
+			i--
+			j--
+		} else if tr[i][j].Op == "ins" {
+			j--
+		} else if tr[i][j].Op == "del" {
+			i--
+		} else {
+			panic("unknown operation: " + tr[i][j].Op)
+		}
+	}
+	i = 0
+	j = len(res) - 1
+	for i < j {
+		res[i], res[j] = res[j], res[i]
+		i++
+		j--
+	}
+	return res
 }
