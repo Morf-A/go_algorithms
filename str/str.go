@@ -1,5 +1,9 @@
 package str
 
+import (
+	"bytes"
+)
+
 func GetLCSSlow(a, b string) string {
 	sA := toSequences2(a)
 	sB := toSequences(b)
@@ -118,6 +122,51 @@ func getLCSMap(x, y []byte) [][]int {
 		}
 	}
 	return l
+}
+
+//find all substrings with finite automaton
+func FindSubstringsFA(needleStr, haystackStr string) []int {
+	needle, haystack := []byte(needleStr), []byte(haystackStr)
+	nextState := make(map[byte][]int)
+	for _, n := range needle {
+		if _, ok := nextState[n]; ok {
+			continue
+		}
+		nextState[n] = make([]int, len(needle)+1)
+		for s := 0; s <= len(needle); s++ {
+			readed := make([]byte, s)
+			copy(readed, needle[:s])
+			readed = append(readed, n)
+			maxPref := len(readed)
+			if maxPref > len(needle) {
+				maxPref = len(needle)
+			}
+			for i := maxPref; i >= 0; i-- {
+				if bytes.Equal(readed[len(readed)-i:], needle[:i]) {
+					nextState[n][s] = i
+					break
+				}
+			}
+		}
+	}
+	var (
+		res []int
+		s   int
+	)
+	if len(needle) == 0 {
+		res = append(res, 0)
+	}
+	for i, h := range haystack {
+		if states, ok := nextState[h]; ok {
+			s = states[s]
+		} else {
+			s = 0
+		}
+		if s == len(needle) {
+			res = append(res, i-len(needle)+1)
+		}
+	}
+	return res
 }
 
 func FindSubstrings(needleStr, haystackStr string) []int {
