@@ -23,3 +23,7 @@ func ExampleFindSubstrings() {
 	fmt.Println(FindSubstrings("ABC", ""))
 	fmt.Println(FindSubstrings("", ""))
 }
+
+func ExampleGetTransforms() {
+	fmt.Println(GetTransforms("ACAAGC", "CCGT"))
+}

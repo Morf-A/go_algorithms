@@ -186,3 +186,23 @@ func FindSubstrings(needleStr, haystackStr string) []int {
 	}
 	return res
 }
+
+type Operation struct {
+	Type string
+	Cost int
+}
+
+type Transform struct {
+	Op   Operation
+	Args []byte
+}
+
+func GetTransforms(xStr, yStr string) []Transform {
+	// OpDel := Operation{"delete", 2}
+	// OpIns := Operation{"insert", 2}
+	// OpCopy := Operation{"copy", -1}
+	// OpRepl := Operation{"replace", 1}
+	// x, y := []byte(xStr), []byte(yStr)
+	// for i := 0
+	return nil
+}
