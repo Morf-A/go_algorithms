@@ -7,7 +7,7 @@ func ExampleLCSSlow() {
 }
 
 func ExampleLCS() {
-	fmt.Println(GetLCS("CATCGA", "GTACCGTCA"))
+	fmt.Println(GetLCS("CATCGC", "GTACCGTCA"))
 }
 
 func ExampleFindSubstringsFA() {

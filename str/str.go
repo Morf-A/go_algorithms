@@ -106,13 +106,13 @@ func revertBytes(b []byte) []byte {
 func getLCSMap(x, y []byte) [][]int {
 	lenX := len(x)
 	lenY := len(y)
-	l := make([][]int, lenX)
-	for i := 0; i < lenX; i++ {
-		l[i] = make([]int, lenY)
+	l := make([][]int, lenX+1)
+	for i := 0; i <= lenX; i++ {
+		l[i] = make([]int, lenY+1)
 	}
-	for i := 1; i < lenX; i++ {
-		for j := 1; j < lenY; j++ {
-			if x[i] == y[j] {
+	for i := 1; i <= lenX; i++ {
+		for j := 1; j <= lenY; j++ {
+			if x[i-1] == y[j-1] {
 				l[i][j] = l[i-1][j-1] + 1
 			} else if l[i-1][j] > l[i][j-1] {
 				l[i][j] = l[i-1][j]
