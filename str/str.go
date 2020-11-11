@@ -119,3 +119,21 @@ func getLCSMap(x, y []byte) [][]int {
 	}
 	return l
 }
+
+func FindSubstrings(needleStr, haystackStr string) []int {
+	needle, haystack := []byte(needleStr), []byte(haystackStr)
+	var res []int
+	for i := 0; i <= len(haystack)-len(needle); i++ {
+		j := 0
+		for j < len(needle) {
+			if needle[j] != haystack[j+i] {
+				break
+			}
+			j++
+		}
+		if j == len(needle) {
+			res = append(res, i)
+		}
+	}
+	return res
+}
