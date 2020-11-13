@@ -1,5 +1,7 @@
 package crypt
 
+import "math"
+
 type Caesar struct {
 	Key byte
 }
@@ -40,4 +42,29 @@ func (r *Caesar) Decrypt(cipher []byte) []byte {
 		x = c
 	}
 	return plain
+}
+
+type RSA struct {
+	Key RSAKey
+}
+
+func (r *RSA) Exp(t int) int {
+	var res float64 = 1
+	tf := float64(t)
+	for i := 1; i <= r.Key.e; i++ {
+		res = math.Mod(res*tf, float64(r.Key.n))
+	}
+	return int(res)
+}
+
+type RSAKey struct {
+	e int
+	n int
+}
+
+func RSAGenKeys() (RSAKey, RSAKey) {
+	e := 5
+	d := 269
+	n := 493
+	return RSAKey{e: e, n: n}, RSAKey{e: d, n: n}
 }

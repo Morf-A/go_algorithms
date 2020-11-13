@@ -19,3 +19,16 @@ func ExampleCBC() {
 	p2 := caesar.Decrypt(c2)
 	fmt.Println("p2:", p2, string(p2))
 }
+
+func ExampleRSA() {
+	pub, priv := RSAGenKeys()
+	t := 'A'
+	e := RSA{Key: pub}
+	d := RSA{Key: priv}
+
+	fmt.Println("plain:", string(t))
+	cipher := e.Exp(int(t))
+	fmt.Println("encrypted: ", cipher)
+	t1 := d.Exp(cipher)
+	fmt.Println("decrypted:", string(t1))
+}
