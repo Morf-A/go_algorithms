@@ -119,13 +119,14 @@ func GetCoprime(random io.Reader, r uint64) uint64 {
 
 //we use Euclidean algorithm
 func GetMultInverse(e, r uint64) uint64 {
-	g, i, j := Euclid(e, r)
+	g, i, _ := Euclid(e, r)
 	if g != 1 {
 		panic("expected greatest common factor == 1")
 	}
-
-	fmt.Println("g, i, j: ", g, i, j)
-	return uint64(j) % r
+	if i < 0 {
+		return r - uint64(-1*i)%r
+	}
+	return uint64(i) % r
 }
 
 func Euclid(a, b uint64) (uint64, int64, int64) {
