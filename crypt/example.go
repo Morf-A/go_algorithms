@@ -25,9 +25,8 @@ func ExampleRSA() {
 	t := 'A'
 	e := RSA{Key: pub}
 	d := RSA{Key: priv}
-
 	fmt.Println("plain:", string(t))
-	cipher := e.Exp(int(t))
+	cipher := e.Exp(uint64(t))
 	fmt.Println("encrypted: ", cipher)
 	t1 := d.Exp(cipher)
 	fmt.Println("decrypted:", string(t1))
