@@ -33,24 +33,34 @@ func (r ReadOne) Read(p []byte) (int, error) {
 
 func ExampleRSA() {
 
-	p := GetRandInt(ReadOne{}, 2)
-	p >>= 1
+	p := GetRandInt(ReadOne{}, 16)
 	fmt.Printf("%d: %016b\n", p, p)
 
-	p2 := GetRandInt(ReadOne{}, 2)
-	pp := p * p2
+	// p2 := GetRandInt(ReadOne{}, 16)
+	pp := p * p
 	fmt.Printf("%d: %064b\n", pp, pp)
 
 	pppp := pp * pp
 	fmt.Printf("%d: %064b\n", pppp, pppp)
 
-	// pub, priv := RSAGenKeys(rand.Reader)
-	// t := 'A'
-	// e := RSA{Key: pub}
-	// d := RSA{Key: priv}
-	// fmt.Println("plain:", string(t))
-	// cipher := e.Exp(int64(t))
+	// digits := RSAGenDigits(rand.Reader)
+	// digits.Debug()
+
+	// pub, priv := digits.GetKeyPair()
+	// t := "TEXT"
+	// encryptor := RSA{Key: pub}
+	// decryptor := RSA{Key: priv}
+	// fmt.Println("plain:", t)
+	// tint := binary.BigEndian.Uint32([]byte(t))
+	// fmt.Println("tint: ", tint)
+	// cipher := encryptor.Exp(tint)
 	// fmt.Println("encrypted: ", cipher)
-	// t1 := d.Exp(cipher)
-	// fmt.Println("decrypted:", string(t1))
+	// t1int := decryptor.Exp(cipher)
+	// fmt.Println("t1int: ", t1int)
+	// buf := new(bytes.Buffer)
+	// err := binary.Write(buf, binary.BigEndian, t1int)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println("decrypted:", buf.String())
 }
