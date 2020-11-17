@@ -107,18 +107,13 @@ func GetRandInt(random io.Reader, nbites int) uint64 {
 	return res
 }
 
-func GetRandPrime(random io.Reader, bytes int) uint64 {
+func GetRandPrime(random io.Reader, isPrime func(p uint64) bool, bytes int) uint64 {
 	for {
 		p := GetRandInt(random, bytes)
-		if p > 1 && IsPrime(p) {
+		if p > 1 && isPrime(uint64(p)) {
 			return p
 		}
 	}
-}
-
-//we use Fermat's little theorem, but in real projects Miller–Rabin primality test is better
-func IsPrime(p uint64) bool {
-	return ModExp(2, p-1, p) == 1
 }
 
 func IsEven(x uint64) bool {
@@ -137,9 +132,9 @@ func ModExp(t, e, n uint64) uint64 {
 	return ((z * z) % n * t) % n
 }
 
-func GetCoprime(random io.Reader, r uint64, nbits int) uint64 {
+func GetCoprime(random io.Reader, isPrime func(p uint64) bool, r uint64, nbits int) uint64 {
 	for {
-		e := GetRandPrime(random, nbits)
+		e := GetRandPrime(random, isPrime, nbits)
 		//e - prime and p not divisible by e => greatest common factor == 1 => e coprime r
 		if r%e != 0 {
 			return e
@@ -152,7 +147,7 @@ func GetCoprime(random io.Reader, r uint64, nbits int) uint64 {
 func GetMultInverse(e, r int64) int64 {
 	g, i, _ := Euclid(e, r)
 	if g != 1 {
-		panic("expected greatest common factor == 1")
+		panic(fmt.Sprintf("gcf(%d,%d) != 1", e, r))
 	}
 	if i < 0 {
 		return r - int64(-1*i)%r
@@ -182,29 +177,30 @@ func (r RSADigits) GetKeyPair() (RSAKey, RSAKey) {
 }
 
 func (r RSADigits) Debug() {
-	fmt.Printf("p: %016b\n", r.P)
-	fmt.Printf("q: %016b\n", r.Q)
-	fmt.Printf("n: %032b\n", r.N)
-	fmt.Printf("r: %032b\n", r.R)
-	fmt.Printf("e: %032b\n", r.E)
-	fmt.Printf("d: %032b\n", r.D)
+	fmt.Printf("p: %d %016b\n", r.P, r.P)
+	fmt.Printf("q: %d %016b\n", r.Q, r.Q)
+	fmt.Printf("n: %d %032b\n", r.N, r.N)
+	fmt.Printf("r: %d %032b\n", r.R, r.R)
+	fmt.Printf("e: %d %032b\n", r.E, r.E)
+	fmt.Printf("d: %d %032b\n", r.D, r.D)
 }
 
-func RSAGenDigits(random io.Reader) RSADigits {
+func RSAGenDigits(random io.Reader, isPrime func(p uint64) bool) RSADigits {
 	var p, q uint16
 	var n uint32
 	for {
-		p = uint16(GetRandPrime(random, 16))
-		q = uint16(GetRandPrime(random, 15))
+		p = uint16(GetRandPrime(random, isPrime, 16))
+		q = uint16(GetRandPrime(random, isPrime, 15))
 		n = uint32(p) * uint32(q)
-		if n > math.MaxUint16 {
+		//to encrypt numbers less than n, n must be big enough
+		if p != q && n > math.MaxUint16 {
 			break
 		}
 	}
 
 	r := uint32(p-1) * uint32(q-1)
-	e := uint32(GetCoprime(random, uint64(r), 16))
-	d := uint32(GetMultInverse(int64(e), int64(r))) // e * d % r == 1
+	e := uint32(GetCoprime(random, isPrime, uint64(r), 16))
+	d := uint32(GetMultInverse(int64(e), int64(r)))
 	return RSADigits{
 		P: p,
 		Q: q,

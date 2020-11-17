@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/binary"
 	"fmt"
+	"math/big"
 )
 
 func ExampleCBC() {
@@ -34,8 +35,19 @@ func (r ReadOne) Read(p []byte) (int, error) {
 	return len(p), nil
 }
 
+//can make mistakes
+func IsPrime(p uint64) bool {
+	return ModExp(2, p-1, p) == 1
+}
+
+func IsPrimeMR(p uint64) bool {
+	bigP := new(big.Int)
+	bigP.SetUint64(p)
+	return bigP.ProbablyPrime(50)
+}
+
 func ExampleRSA() {
-	digits := RSAGenDigits(rand.Reader)
+	digits := RSAGenDigits(rand.Reader, IsPrimeMR)
 	digits.Debug()
 	pub, priv := digits.GetKeyPair()
 	t := "HI"
