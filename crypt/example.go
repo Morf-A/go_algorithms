@@ -1,6 +1,9 @@
 package crypt
 
 import (
+	"bytes"
+	"crypto/rand"
+	"encoding/binary"
 	"fmt"
 )
 
@@ -32,35 +35,32 @@ func (r ReadOne) Read(p []byte) (int, error) {
 }
 
 func ExampleRSA() {
-
-	p := GetRandInt(ReadOne{}, 16)
-	fmt.Printf("%d: %016b\n", p, p)
-
-	// p2 := GetRandInt(ReadOne{}, 16)
-	pp := p * p
-	fmt.Printf("%d: %064b\n", pp, pp)
-
-	pppp := pp * pp
-	fmt.Printf("%d: %064b\n", pppp, pppp)
-
-	// digits := RSAGenDigits(rand.Reader)
-	// digits.Debug()
-
-	// pub, priv := digits.GetKeyPair()
-	// t := "TEXT"
-	// encryptor := RSA{Key: pub}
-	// decryptor := RSA{Key: priv}
-	// fmt.Println("plain:", t)
-	// tint := binary.BigEndian.Uint32([]byte(t))
-	// fmt.Println("tint: ", tint)
-	// cipher := encryptor.Exp(tint)
-	// fmt.Println("encrypted: ", cipher)
-	// t1int := decryptor.Exp(cipher)
-	// fmt.Println("t1int: ", t1int)
-	// buf := new(bytes.Buffer)
-	// err := binary.Write(buf, binary.BigEndian, t1int)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println("decrypted:", buf.String())
+	digits := RSAGenDigits(rand.Reader)
+	digits.Debug()
+	pub, priv := digits.GetKeyPair()
+	t := "HI"
+	encryptor := RSA{Key: pub}
+	decryptor := RSA{Key: priv}
+	fmt.Println("plain:", t)
+	tint := binary.BigEndian.Uint16([]byte(t))
+	fmt.Println("tint: ", tint)
+	cipher, err := encryptor.Encrypt(tint)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("encrypted: ", cipher)
+	t1int, err := decryptor.Decrypt(cipher)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("t1int: ", t1int)
+	buf := new(bytes.Buffer)
+	err = binary.Write(buf, binary.BigEndian, t1int)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("decrypted:", buf.String())
+	if buf.String() != t {
+		panic("not equal")
+	}
 }
