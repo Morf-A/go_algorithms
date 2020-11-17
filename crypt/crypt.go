@@ -4,7 +4,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"math"
 )
 
 type Caesar struct {
@@ -53,17 +52,17 @@ type RSA struct {
 	Key RSAKey
 }
 
-func (r *RSA) Exp(t uint64) uint64 {
+func (r *RSA) Exp(t int64) int64 {
 	return ModExp(t, r.Key.E, r.Key.N)
 }
 
 type RSAKey struct {
-	E uint64
-	N uint64
+	E int64
+	N int64
 }
 
-func GetRandInt(random io.Reader, nbytes int) uint64 {
-	if nbytes > 8 {
+func GetRandInt(random io.Reader, nbites int) int64 {
+	if nbytes > 63 {
 		panic("integer length overflow")
 	}
 	bytes := make([]byte, nbytes, 8)
@@ -73,28 +72,32 @@ func GetRandInt(random io.Reader, nbytes int) uint64 {
 	}
 	pad := make([]byte, 8-nbytes)
 	bytes = append(bytes, pad...)
-	return binary.LittleEndian.Uint64(bytes)
+	i64 := int64(binary.LittleEndian.Uint64(bytes))
+	if i64 < 0 {
+		i64 *= -1
+	}
+	return i64
 }
 
-func GetRandPrime(random io.Reader, bytes int, min uint64) uint64 {
+func GetRandPrime(random io.Reader, bytes int) int64 {
 	for {
 		p := GetRandInt(random, bytes)
-		if p >= min && IsPrime(p) {
+		if p > 1 && IsPrime(p) {
 			return p
 		}
 	}
 }
 
 //we use Fermat's little theorem, but in real projects Miller–Rabin primality test is better
-func IsPrime(p uint64) bool {
+func IsPrime(p int64) bool {
 	return ModExp(2, p-1, p) == 1
 }
 
-func IsEven(x uint64) bool {
+func IsEven(x int64) bool {
 	return x%2 == 0
 }
 
-func ModExp(t, e, n uint64) uint64 {
+func ModExp(t, e, n int64) int64 {
 	if e == 0 {
 		return 1
 	}
@@ -103,12 +106,12 @@ func ModExp(t, e, n uint64) uint64 {
 		return (z * z) % n
 	}
 	z := ModExp(t, (e-1)/2, n)
-	return (z * z * t) % n
+	return ((z * z) % n * t) % n
 }
 
-func GetCoprime(random io.Reader, r uint64) uint64 {
+func GetCoprime(random io.Reader, r int64) int64 {
 	for {
-		e := GetRandPrime(random, 4, math.MaxUint8)
+		e := GetRandPrime(random, 4)
 		//e - prime and p not divisible by e => greatest common factor == 1 => e coprime r
 		if r%e != 0 {
 			return e
@@ -118,52 +121,44 @@ func GetCoprime(random io.Reader, r uint64) uint64 {
 }
 
 //we use Euclidean algorithm
-func GetMultInverse(e, r uint64) uint64 {
+func GetMultInverse(e, r int64) int64 {
 	g, i, _ := Euclid(e, r)
 	if g != 1 {
 		panic("expected greatest common factor == 1")
 	}
 	if i < 0 {
-		return r - uint64(-1*i)%r
+		return r - int64(-1*i)%r
 	}
-	return uint64(i) % r
+	return int64(i) % r
 }
 
-func Euclid(a, b uint64) (uint64, int64, int64) {
+func Euclid(a, b int64) (int64, int64, int64) {
 	if b == 0 {
 		return a, 1, 0
 	}
 	g, i, j := Euclid(b, a%b)
-	return g, j, i - int64(a/b)*j
+	return g, j, i - a/b*j
 }
 
-func GenKeys(random io.Reader) (RSAKey, RSAKey) {
-	p := GetRandPrime(random, 4, math.MaxUint16)
-	q := GetRandPrime(random, 4, math.MaxUint16)
+func RSAGenKeys(random io.Reader) (RSAKey, RSAKey) {
+	p := GetRandPrime(random, 2)
+	fmt.Printf("p: %064b\n", p)
+	q := GetRandPrime(random, 2)
 	n := p * q
+	fmt.Printf("q: %064b\n", q)
+	fmt.Printf("n: %064b\n", n)
+
 	r := (p - 1) * (q - 1)
 	e := GetCoprime(random, r)
-	fmt.Println(n, e, r)
 	d := GetMultInverse(e, r) // e * d % r == 1
 
-	fmt.Println("e: ", e)
-	fmt.Println("d: ", d)
-	fmt.Println(e * d % r)
-
-	// fmt.Printf("p: %064b\n", p)
-	// fmt.Printf("q: %064b\n", q)
-	// fmt.Printf("n: %064b\n", n)
-	// fmt.Printf("r: %064b\n", r)
-	// fmt.Printf("e: %064b\n", e)
-	// fmt.Printf("d: %064b\n", d)
+	fmt.Printf("r: %064b\n", r)
+	fmt.Printf("e: %064b\n", e)
+	fmt.Printf("d: %064b\n", d)
 
 	return buildKeys(e, d, n)
 }
 
-func buildKeys(e, d, n uint64) (RSAKey, RSAKey) {
+func buildKeys(e, d, n int64) (RSAKey, RSAKey) {
 	return RSAKey{E: e, N: n}, RSAKey{E: d, N: n}
-}
-
-func RSAGenKeys() (RSAKey, RSAKey) {
-	return buildKeys(5, 269, 493)
 }

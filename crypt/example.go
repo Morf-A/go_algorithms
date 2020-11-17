@@ -1,6 +1,8 @@
 package crypt
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func ExampleCBC() {
 	caesar := NewCaesar(16)
@@ -20,14 +22,35 @@ func ExampleCBC() {
 	fmt.Println("p2:", p2, string(p2))
 }
 
+type ReadOne struct{}
+
+func (r ReadOne) Read(p []byte) (int, error) {
+	for i := 0; i < len(p); i++ {
+		p[i] = 255
+	}
+	return len(p), nil
+}
+
 func ExampleRSA() {
-	pub, priv := RSAGenKeys()
-	t := 'A'
-	e := RSA{Key: pub}
-	d := RSA{Key: priv}
-	fmt.Println("plain:", string(t))
-	cipher := e.Exp(uint64(t))
-	fmt.Println("encrypted: ", cipher)
-	t1 := d.Exp(cipher)
-	fmt.Println("decrypted:", string(t1))
+
+	p := GetRandInt(ReadOne{}, 2)
+	p >>= 1
+	fmt.Printf("%d: %016b\n", p, p)
+
+	p2 := GetRandInt(ReadOne{}, 2)
+	pp := p * p2
+	fmt.Printf("%d: %064b\n", pp, pp)
+
+	pppp := pp * pp
+	fmt.Printf("%d: %064b\n", pppp, pppp)
+
+	// pub, priv := RSAGenKeys(rand.Reader)
+	// t := 'A'
+	// e := RSA{Key: pub}
+	// d := RSA{Key: priv}
+	// fmt.Println("plain:", string(t))
+	// cipher := e.Exp(int64(t))
+	// fmt.Println("encrypted: ", cipher)
+	// t1 := d.Exp(cipher)
+	// fmt.Println("decrypted:", string(t1))
 }
