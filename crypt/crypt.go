@@ -53,41 +53,67 @@ type RSA struct {
 	Key RSAKey
 }
 
-func (r *RSA) Exp(t uint64) uint64 {
-	return ModExp(t, r.Key.E, r.Key.N)
+//check that t < n
+func (r *RSA) Encrypt(t uint16) (uint32, error) {
+	if err := r.CheckT(uint32(t)); err != nil {
+		return 0, err
+	}
+	return r.exp(uint32(t)), nil
+}
+
+func (r *RSA) CheckT(t uint32) error {
+	if t >= r.Key.N {
+		return fmt.Errorf("t can`t be bigger than n %d %d", t, r.Key.N)
+	}
+	return nil
+}
+
+func (r *RSA) Decrypt(t uint32) (uint16, error) {
+	if err := r.CheckT(t); err != nil {
+		return 0, err
+	}
+	return uint16(r.exp(t)), nil
+}
+
+func (r *RSA) exp(t uint32) uint32 {
+	return uint32(ModExp(uint64(t), uint64(r.Key.E), uint64(r.Key.N)))
 }
 
 type RSAKey struct {
-	E uint64
-	N uint64
+	E uint32
+	N uint32
 }
 
-func GetRandInt(random io.Reader, nbytes int) uint64 {
-	if nbytes > 8 {
-		panic("integer length overflow")
+func GetRandInt(random io.Reader, nbites int) uint64 {
+	if nbites > 63 || nbites < 0 {
+		panic(fmt.Sprintf("bad nbites param (%d)", nbites))
 	}
-	bytes := make([]byte, nbytes, 8)
+	fullBytes := nbites / 8
+	rBites := nbites % 8
+	if rBites > 0 {
+		fullBytes++
+	}
+	bytes := make([]byte, fullBytes, 8)
 	_, err := io.ReadFull(random, bytes)
 	if err != nil {
 		panic(err)
 	}
-	pad := make([]byte, 8-nbytes)
+	pad := make([]byte, 8-fullBytes)
 	bytes = append(bytes, pad...)
-	return binary.LittleEndian.Uint64(bytes)
+	res := binary.LittleEndian.Uint64(bytes)
+	if rBites > 0 {
+		res >>= (8 - rBites)
+	}
+	return res
 }
 
-func GetRandPrime(random io.Reader, bytes int, min uint64) uint64 {
+func GetRandPrime(random io.Reader, isPrime func(p uint64) bool, bytes int) uint64 {
 	for {
 		p := GetRandInt(random, bytes)
-		if p >= min && IsPrime(p) {
+		if p > 1 && isPrime(uint64(p)) {
 			return p
 		}
 	}
-}
-
-//we use Fermat's little theorem, but in real projects Miller–Rabin primality test is better
-func IsPrime(p uint64) bool {
-	return ModExp(2, p-1, p) == 1
 }
 
 func IsEven(x uint64) bool {
@@ -103,12 +129,12 @@ func ModExp(t, e, n uint64) uint64 {
 		return (z * z) % n
 	}
 	z := ModExp(t, (e-1)/2, n)
-	return (z * z * t) % n
+	return ((z * z) % n * t) % n
 }
 
-func GetCoprime(random io.Reader, r uint64) uint64 {
+func GetCoprime(random io.Reader, isPrime func(p uint64) bool, r uint64, nbits int) uint64 {
 	for {
-		e := GetRandPrime(random, 4, math.MaxUint8)
+		e := GetRandPrime(random, isPrime, nbits)
 		//e - prime and p not divisible by e => greatest common factor == 1 => e coprime r
 		if r%e != 0 {
 			return e
@@ -118,52 +144,69 @@ func GetCoprime(random io.Reader, r uint64) uint64 {
 }
 
 //we use Euclidean algorithm
-func GetMultInverse(e, r uint64) uint64 {
+func GetMultInverse(e, r int64) int64 {
 	g, i, _ := Euclid(e, r)
 	if g != 1 {
-		panic("expected greatest common factor == 1")
+		panic(fmt.Sprintf("gcf(%d,%d) != 1", e, r))
 	}
 	if i < 0 {
-		return r - uint64(-1*i)%r
+		return r - int64(-1*i)%r
 	}
-	return uint64(i) % r
+	return int64(i) % r
 }
 
-func Euclid(a, b uint64) (uint64, int64, int64) {
+func Euclid(a, b int64) (int64, int64, int64) {
 	if b == 0 {
 		return a, 1, 0
 	}
 	g, i, j := Euclid(b, a%b)
-	return g, j, i - int64(a/b)*j
+	return g, j, i - a/b*j
 }
 
-func GenKeys(random io.Reader) (RSAKey, RSAKey) {
-	p := GetRandPrime(random, 4, math.MaxUint16)
-	q := GetRandPrime(random, 4, math.MaxUint16)
-	n := p * q
-	r := (p - 1) * (q - 1)
-	e := GetCoprime(random, r)
-	fmt.Println(n, e, r)
-	d := GetMultInverse(e, r) // e * d % r == 1
-
-	fmt.Println("e: ", e)
-	fmt.Println("d: ", d)
-	fmt.Println(e * d % r)
-
-	// fmt.Printf("p: %064b\n", p)
-	// fmt.Printf("q: %064b\n", q)
-	// fmt.Printf("n: %064b\n", n)
-	// fmt.Printf("r: %064b\n", r)
-	// fmt.Printf("e: %064b\n", e)
-	// fmt.Printf("d: %064b\n", d)
-
-	return buildKeys(e, d, n)
+type RSADigits struct {
+	P uint16
+	Q uint16
+	N uint32
+	R uint32
+	E uint32
+	D uint32
 }
 
-func buildKeys(e, d, n uint64) (RSAKey, RSAKey) {
-	return RSAKey{E: e, N: n}, RSAKey{E: d, N: n}
+func (r RSADigits) GetKeyPair() (RSAKey, RSAKey) {
+	return RSAKey{E: r.E, N: r.N}, RSAKey{E: r.D, N: r.N}
 }
 
-func RSAGenKeys() (RSAKey, RSAKey) {
-	return buildKeys(5, 269, 493)
+func (r RSADigits) Debug() {
+	fmt.Printf("p: %d %016b\n", r.P, r.P)
+	fmt.Printf("q: %d %016b\n", r.Q, r.Q)
+	fmt.Printf("n: %d %032b\n", r.N, r.N)
+	fmt.Printf("r: %d %032b\n", r.R, r.R)
+	fmt.Printf("e: %d %032b\n", r.E, r.E)
+	fmt.Printf("d: %d %032b\n", r.D, r.D)
+}
+
+func RSAGenDigits(random io.Reader, isPrime func(p uint64) bool) RSADigits {
+	var p, q uint16
+	var n uint32
+	for {
+		p = uint16(GetRandPrime(random, isPrime, 16))
+		q = uint16(GetRandPrime(random, isPrime, 15))
+		n = uint32(p) * uint32(q)
+		//to encrypt numbers less than n, n must be big enough
+		if p != q && n > math.MaxUint16 {
+			break
+		}
+	}
+
+	r := uint32(p-1) * uint32(q-1)
+	e := uint32(GetCoprime(random, isPrime, uint64(r), 16))
+	d := uint32(GetMultInverse(int64(e), int64(r)))
+	return RSADigits{
+		P: p,
+		Q: q,
+		N: n,
+		R: r,
+		E: e,
+		D: d,
+	}
 }
