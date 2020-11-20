@@ -2,6 +2,7 @@ package compression
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 )
 
@@ -15,14 +16,26 @@ func ExampleHuffman() {
 		panic(err)
 	}
 
-	for k, v := range stat {
-		fmt.Println(string(k), v)
-	}
 	tree := HuffmanTreeFromStat(stat)
 	table := HuffmanTreeToTable(tree)
 	encodedTable := table.Encode()
 	for _, t := range DecodeHuffmanTable(encodedTable) {
-		fmt.Println(string(t.Element), t.Code)
+		fmt.Println(t.Element, t.Code)
 	}
+
+	if _, err := book.Seek(0, 0); err != nil {
+		panic(err)
+	}
+
+	encoded, old, new := HuffmanEncode(book, tree)
+	fmt.Printf("old: %d, new: %d, efficiency: %.2f%%", old, new, float64(new)/float64(old)*100)
+
+	reader := HuffmanDecode(encoded, tree)
+
+	original, err := ioutil.ReadAll(reader)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(original))
 
 }

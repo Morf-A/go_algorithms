@@ -105,6 +105,14 @@ func HuffmanTreeToTable(n *TNode) HuffmanTable {
 	return HuffmanTable(hCodes)
 }
 
+func HuffmanDecode(r io.Reader, tree *TNode) io.Reader {
+	return bytes.NewReader(nil)
+}
+
+func HuffmanEncode(r io.Reader, tree *TNode) (io.Reader, int, int) {
+	return bytes.NewReader(nil), 4324, 420
+}
+
 func HuffmanTreeFromTable(ht HuffmanTable) *TNode {
 	return nil
 }
