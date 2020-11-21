@@ -114,7 +114,25 @@ func HuffmanEncode(r io.Reader, tree *TNode) (io.Reader, int, int) {
 }
 
 func HuffmanTreeFromTable(ht HuffmanTable) *TNode {
-	return nil
+	root := new(TNode)
+	for _, hCode := range ht {
+		n := root
+		for _, b := range hCode.Code {
+			if b == 1 {
+				if n.Left == nil {
+					n.Left = new(TNode)
+				}
+				n = n.Left
+			} else {
+				if n.Right == nil {
+					n.Right = new(TNode)
+				}
+				n = n.Right
+			}
+		}
+		n.Element = hCode.Element
+	}
+	return root
 }
 
 func HuffmanTreeFromStat(stat map[byte]int) *TNode {
