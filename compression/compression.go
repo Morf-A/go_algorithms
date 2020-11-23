@@ -3,6 +3,7 @@ package compression
 import (
 	"bufio"
 	"bytes"
+	"container/list"
 	"encoding/gob"
 	"io"
 	"math"
@@ -36,6 +37,8 @@ func StatToPriorityQueue(stat map[byte]int) *PriorityQueue {
 	return &pq
 }
 
+type bit int8
+
 type TNode struct {
 	Element byte
 	Name    string
@@ -46,7 +49,7 @@ type TNode struct {
 
 type HuffmanCode struct {
 	Element byte
-	Code    []byte
+	Code    []bit
 }
 
 type HuffmanTable []HuffmanCode
@@ -67,8 +70,8 @@ func DecodeHuffmanTable(b []byte) HuffmanTable {
 	return ht
 }
 
-func extend(b []byte, add byte) []byte {
-	new := make([]byte, len(b))
+func extend(b []bit, add bit) []bit {
+	new := make([]bit, len(b))
 	copy(new, b)
 	new = append(new, add)
 	return new
@@ -80,10 +83,10 @@ func HuffmanTreeToTable(n *TNode) HuffmanTable {
 	}
 	type qe struct {
 		node *TNode
-		code []byte
+		code []bit
 	}
 	var queue []qe
-	var hCodes []HuffmanCode
+	var ht []HuffmanCode
 	queue = append(queue, qe{node: n, code: nil})
 	for len(queue) != 0 {
 		e := queue[0]
@@ -96,21 +99,82 @@ func HuffmanTreeToTable(n *TNode) HuffmanTable {
 			queue = append(queue, qe{node: n.Right, code: extend(e.code, 0)})
 		}
 		if n.Left == nil && n.Right == nil { //leaf
-			hCodes = append(hCodes, HuffmanCode{
+			ht = append(ht, HuffmanCode{
 				Element: n.Element,
 				Code:    e.code,
 			})
 		}
 	}
-	return HuffmanTable(hCodes)
+	return HuffmanTable(ht)
 }
 
 func HuffmanDecode(r io.Reader, tree *TNode) io.Reader {
 	return bytes.NewReader(nil)
 }
 
+type HuffmanReader struct {
+	bitList *list.List
+	Buffer  *bufio.Reader
+	EOF     bool
+}
+
+func (ht *HuffmanReader) PlainToBits(b byte) []bit {
+	return nil
+}
+
+func (hr *HuffmanReader) nextEncodedBit() (bit, bool) {
+	nextPtr := hr.bitList.Front().Value
+	if nextPtr == nil {
+		plainByte, err := hr.Buffer.ReadByte()
+		if err == io.EOF {
+			return 0, false
+		}
+		if err != nil {
+			panic(err)
+		}
+		bits := hr.PlainToBits(plainByte)
+		for _, b := range bits {
+			hr.bitList.PushBack(b)
+		}
+		nextPtr = hr.bitList.Front().Value
+	}
+	return *(nextPtr.(*bit)), true
+}
+
+func (hr *HuffmanReader) nextEncodedByte() (byte, bool) {
+	var res byte
+	for i := 0; i < 8; i++ {
+		nextBit, ok := hr.nextEncodedBit()
+		if !ok {
+
+		}
+		res |= (byte(nextBit) << i)
+	}
+	return res, true
+}
+
+func (hr *HuffmanReader) Read(toFill []byte) (int, error) {
+	i := 0
+	for i < len(toFill) {
+		b, ok := hr.nextEncodedByte()
+		if !ok {
+			break
+		}
+		toFill[i] = b
+		i++
+	}
+	var err error
+	if i == 0 {
+		err = io.EOF
+	}
+	return i, err
+}
+
 func HuffmanEncode(r io.Reader, tree *TNode) (io.Reader, int, int) {
-	return bytes.NewReader(nil), 4324, 420
+	return &HuffmanReader{
+		bitList: list.New(),
+		Buffer:  bufio.NewReader(r),
+	}, 4324, 420
 }
 
 func HuffmanTreeFromTable(ht HuffmanTable) *TNode {
