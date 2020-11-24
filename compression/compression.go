@@ -112,10 +112,19 @@ func HuffmanDecode(r io.Reader, tree *TNode) io.Reader {
 	return bytes.NewReader(nil)
 }
 
+type hrState int
+
+const (
+	hrInProgress hrState = iota
+	hrSourceEOF
+	hrEOF
+)
+
 type HuffmanReader struct {
-	bitList *list.List
-	Buffer  *bufio.Reader
-	EOF     bool
+	bitList  *list.List
+	buffer   *bufio.Reader
+	state    hrState
+	lastByte byte
 }
 
 func (ht *HuffmanReader) PlainToBits(b byte) []bit {
@@ -125,7 +134,7 @@ func (ht *HuffmanReader) PlainToBits(b byte) []bit {
 func (hr *HuffmanReader) nextEncodedBit() (bit, bool) {
 	nextPtr := hr.bitList.Front().Value
 	if nextPtr == nil {
-		plainByte, err := hr.Buffer.ReadByte()
+		plainByte, err := hr.buffer.ReadByte()
 		if err == io.EOF {
 			return 0, false
 		}
@@ -141,39 +150,45 @@ func (hr *HuffmanReader) nextEncodedBit() (bit, bool) {
 	return *(nextPtr.(*bit)), true
 }
 
-func (hr *HuffmanReader) nextEncodedByte() (byte, bool) {
+func (hr *HuffmanReader) nextEncodedByte() (byte, error) {
+	if hr.state == hrEOF {
+		return 0, io.EOF
+	}
+	if hr.state == hrSourceEOF {
+		hr.state = hrEOF
+		return hr.lastByte, nil
+	}
 	var res byte
 	for i := 0; i < 8; i++ {
 		nextBit, ok := hr.nextEncodedBit()
 		if !ok {
-
+			hr.state = hrSourceEOF
+			hr.lastByte = byte(i)
+			return res, nil
 		}
 		res |= (byte(nextBit) << i)
 	}
-	return res, true
+	return res, nil
 }
 
 func (hr *HuffmanReader) Read(toFill []byte) (int, error) {
 	i := 0
 	for i < len(toFill) {
-		b, ok := hr.nextEncodedByte()
-		if !ok {
-			break
+		b, err := hr.nextEncodedByte()
+		if err != nil {
+			return 0, err
 		}
 		toFill[i] = b
 		i++
 	}
-	var err error
-	if i == 0 {
-		err = io.EOF
-	}
-	return i, err
+	return i, nil
 }
 
 func HuffmanEncode(r io.Reader, tree *TNode) (io.Reader, int, int) {
 	return &HuffmanReader{
 		bitList: list.New(),
-		Buffer:  bufio.NewReader(r),
+		state:   hrInProgress,
+		buffer:  bufio.NewReader(r),
 	}, 4324, 420
 }
 
