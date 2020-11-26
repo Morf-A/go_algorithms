@@ -17,26 +17,28 @@ func ExampleHuffman() {
 	}
 
 	tree := HuffmanTreeFromStat(stat)
-	table := HuffmanTreeToTable(tree)
+	table := tree.ToTable()
 	encodedTable := table.Encode()
 	decodedTable := DecodeHuffmanTable(encodedTable)
-	for _, t := range decodedTable {
-		fmt.Println(t.Element, t.Code)
+	for element, bits := range decodedTable {
+		fmt.Println(element, bits)
 	}
 
-	newTree := HuffmanTreeFromTable(decodedTable)
+	newTree := decodedTable.ToTree()
 	fmt.Println("--------------")
-	for _, t := range HuffmanTreeToTable(newTree) {
-		fmt.Println(t.Element, t.Code)
+	for element, bits := range newTree.ToTable() {
+		fmt.Println(element, bits)
 	}
 
 	if _, err := book.Seek(0, 0); err != nil {
 		panic(err)
 	}
-	encoded, old, new := HuffmanEncode(book, newTree)
-	fmt.Printf("old: %d, new: %d, efficiency: %.2f%%", old, new, float64(new)/float64(old)*100)
+	encoded := HuffmanEncode(book, decodedTable)
 
-	reader := HuffmanDecode(encoded, newTree)
+	reader, err := HuffmanDecode(encoded, newTree)
+	if err != nil {
+		panic(err)
+	}
 
 	original, err := ioutil.ReadAll(reader)
 	if err != nil {
