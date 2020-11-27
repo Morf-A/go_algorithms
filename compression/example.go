@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
+	"strings"
 )
 
 func ExampleHuffman() {
-	book, err := os.Open("book.txt")
-	if err != nil {
-		panic(err)
-	}
+
+	book := strings.NewReader("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
 
 	bookBytes, err := ioutil.ReadAll(book)
 	if err != nil {
