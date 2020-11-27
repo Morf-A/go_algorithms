@@ -190,6 +190,9 @@ func (hd *HuffmanDecoder) nextBit() (bit, error) {
 		}
 		if err == io.EOF {
 			//so, hd.last2Bytes[1] - bits count in hd.last2Bytes[0]
+			if hd.last2Bytes[1] == 0 {
+				return 0, io.EOF
+			}
 			bits := ByteToBits(hd.last2Bytes[0])
 			for i := 0; i < int(hd.last2Bytes[1]); i++ {
 				hd.bitList.PushBack(bits[i])
