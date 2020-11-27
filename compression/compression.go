@@ -75,7 +75,7 @@ func ByteToBits(b byte) []bit {
 }
 
 func (hd *HuffmanDecoder) nextBit() (bit, bool) {
-	nextPtr := hd.bitList.Front().Value
+	nextPtr := hd.bitList.Front()
 	if nextPtr == nil {
 		nextByte, err := hd.buffer.ReadByte()
 		if err == io.EOF {
@@ -94,9 +94,11 @@ func (hd *HuffmanDecoder) nextBit() (bit, bool) {
 		for _, oneBit := range ByteToBits(oneByte) {
 			hd.bitList.PushBack(oneBit)
 		}
-		nextPtr = hd.bitList.Front().Value
+		nextPtr = hd.bitList.Front()
 	}
-	return *(nextPtr.(*bit)), true
+	res := nextPtr.Value.(bit)
+	hd.bitList.Remove(nextPtr)
+	return res, true
 }
 
 func (hd *HuffmanDecoder) nextDecodedByte() (byte, error) {
@@ -160,7 +162,7 @@ func (he *HuffmanEncoder) PlainToBits(b byte) []bit {
 }
 
 func (he *HuffmanEncoder) nextEncodedBit() (bit, bool) {
-	nextPtr := he.bitList.Front().Value
+	nextPtr := he.bitList.Front()
 	if nextPtr == nil {
 		plainByte, err := he.buffer.ReadByte()
 		if err == io.EOF {
@@ -173,9 +175,11 @@ func (he *HuffmanEncoder) nextEncodedBit() (bit, bool) {
 		for _, b := range bits {
 			he.bitList.PushBack(b)
 		}
-		nextPtr = he.bitList.Front().Value
+		nextPtr = he.bitList.Front()
 	}
-	return *(nextPtr.(*bit)), true
+	res := nextPtr.Value.(bit)
+	he.bitList.Remove(nextPtr)
+	return res, true
 }
 
 func (he *HuffmanEncoder) nextEncodedByte() (byte, error) {
@@ -187,7 +191,7 @@ func (he *HuffmanEncoder) nextEncodedByte() (byte, error) {
 		return he.lastByte, nil
 	}
 	var res byte
-	for i := 0; i < 8; i++ {
+	for i := 7; i >= 0; i-- {
 		nextBit, ok := he.nextEncodedBit()
 		if !ok {
 			he.state = hSourceEOF
@@ -199,17 +203,20 @@ func (he *HuffmanEncoder) nextEncodedByte() (byte, error) {
 	return res, nil
 }
 
-func (he *HuffmanEncoder) Read(toFill []byte) (int, error) {
-	i := 0
+func (he *HuffmanEncoder) Read(toFill []byte) (i int, err error) {
 	for i < len(toFill) {
-		b, err := he.nextEncodedByte()
+		var b byte
+		b, err = he.nextEncodedByte()
 		if err != nil {
-			return 0, err
+			break
 		}
 		toFill[i] = b
 		i++
 	}
-	return i, nil
+	if i > 0 {
+		err = nil
+	}
+	return
 }
 
 func HuffmanEncode(r io.Reader, table HuffmanTable) io.Reader {

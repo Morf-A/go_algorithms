@@ -35,6 +35,12 @@ func ExampleHuffman() {
 	}
 	encoded := HuffmanEncode(book, decodedTable)
 
+	bbb, err := ioutil.ReadAll(encoded) //tmp
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(bbb)
+	return
 	reader, err := HuffmanDecode(encoded, newTree)
 	if err != nil {
 		panic(err)
