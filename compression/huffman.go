@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"sort"
 )
 
 type TNode struct {
@@ -35,10 +36,10 @@ func DecodeHuffmanTable(b []byte) HuffmanTable {
 	return ht
 }
 
-func extend(b []bit, add bit) []bit {
+func extend(b []bit, add ...bit) []bit {
 	new := make([]bit, len(b))
 	copy(new, b)
-	new = append(new, add)
+	new = append(new, add...)
 	return new
 }
 
@@ -130,9 +131,17 @@ func ByteStatistic(r io.Reader) (map[byte]int, error) {
 
 func StatToPriorityQueue(stat map[byte]int) *PriorityQueue {
 	pq := PriorityQueue{}
-	for k, v := range stat {
+	keys := make([]byte, 0, len(stat))
+	for k := range stat {
+		keys = append(keys, k)
+	}
+	//to get the same trees
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] > keys[j]
+	})
+	for _, k := range keys {
 		pq.Insert(&TNode{
-			Count:   v,
+			Count:   stat[k],
 			Element: k,
 		})
 	}

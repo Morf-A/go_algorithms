@@ -8,6 +8,40 @@ import (
 	"strings"
 )
 
+func ExampleAdaptiveHuffman() {
+	bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
+	book := bytes.NewReader(bookBytes)
+	encoded := HuffmanAdaptiveEncode(book)
+
+	encodedCopy := &bytes.Buffer{}
+	decoded, err := HuffmanAdaptiveDecode(io.TeeReader(encoded, encodedCopy))
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(encodedCopy.Bytes())
+	return
+
+	original, err := ioutil.ReadAll(decoded)
+	if err != nil {
+		panic(err)
+	}
+	if bytes.Equal(original, bookBytes) {
+		fmt.Println("Equal")
+	} else {
+		fmt.Println("Not equal")
+	}
+	originalLen := len(original)
+	encodedLen := len(encodedCopy.Bytes())
+	fmt.Printf(
+		"%d -> %d %.2f%%\n",
+		originalLen,
+		encodedLen,
+		float64(encodedLen)*float64(100)/float64(originalLen),
+	)
+
+}
+
 func ExampleHuffman() {
 
 	book := strings.NewReader("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
