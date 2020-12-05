@@ -11,6 +11,7 @@ import (
 func ExampleAdaptiveHuffman() {
 	bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
 	book := bytes.NewReader(bookBytes)
+
 	encoded := HuffmanAdaptiveEncode(book)
 
 	encodedCopy := &bytes.Buffer{}
@@ -18,9 +19,6 @@ func ExampleAdaptiveHuffman() {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(encodedCopy.Bytes())
-	return
 
 	original, err := ioutil.ReadAll(decoded)
 	if err != nil {

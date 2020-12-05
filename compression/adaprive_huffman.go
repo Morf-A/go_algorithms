@@ -1,30 +1,37 @@
 package compression
 
+//TODO: merge huffman and adaptive huffman, optimize table re-building
 import (
 	"bufio"
 	"container/list"
 	"io"
+	"math"
+	"sort"
 )
 
+const escape = -1
+
 func HuffmanAdaptiveEncode(r io.Reader) io.Reader {
+	stat := make(map[int]int)
+	stat[escape] = 0
 	return &HuffmanAdaptiveEncoder{
 		bitList: list.New(),
 		state:   hInProgress,
 		buffer:  bufio.NewReader(r),
-		table:   make(HuffmanTable),
-		stat:    make(map[byte]int),
-		escape:  []bit{0, 0, 0, 0, 0, 0, 0, 0},
+		table:   make(AdaptiveHuffmanTable),
+		stat:    stat,
 	}
 }
+
+type AdaptiveHuffmanTable map[int][]bit
 
 type HuffmanAdaptiveEncoder struct {
 	bitList  *list.List
 	buffer   *bufio.Reader
-	table    HuffmanTable
+	table    AdaptiveHuffmanTable
 	state    hState
 	lastByte byte
-	stat     map[byte]int
-	escape   []bit
+	stat     map[int]int
 }
 
 func (he *HuffmanAdaptiveEncoder) Read(toFill []byte) (i int, err error) {
@@ -86,16 +93,44 @@ func (he *HuffmanAdaptiveEncoder) nextEncodedBit() (bit, bool) {
 }
 
 func (he *HuffmanAdaptiveEncoder) PlainToBits(b byte) []bit {
-	he.stat[b]++
-	bits, ok := he.table[b]
+	he.stat[int(b)]++
+	bits, ok := he.table[int(b)]
 	var res []bit
 	if !ok {
-		res = extend(he.escape, ByteToBits(b)...)
+		res = extend(he.table[escape], ByteToBits(b)...)
 	} else {
 		res = bits
 	}
-	he.table = HuffmanTreeFromStat(he.stat).ToTable()
+	he.table = AdaptiveHuffmanTreeFromStat(he.stat).ToTable()
 	return res
+}
+
+func (n *TANode) ToTable() AdaptiveHuffmanTable {
+	if n == nil {
+		return nil
+	}
+	type qe struct {
+		node *TANode
+		code []bit
+	}
+	var queue []qe
+	ht := make(map[int][]bit)
+	queue = append(queue, qe{node: n, code: nil})
+	for len(queue) != 0 {
+		e := queue[0]
+		n := e.node
+		queue = queue[1:]
+		if n.Left != nil {
+			queue = append(queue, qe{node: n.Left, code: extend(e.code, 1)})
+		}
+		if n.Right != nil {
+			queue = append(queue, qe{node: n.Right, code: extend(e.code, 0)})
+		}
+		if n.Left == nil && n.Right == nil { //leaf
+			ht[n.Element] = e.code
+		}
+	}
+	return AdaptiveHuffmanTable(ht)
 }
 
 func HuffmanAdaptiveDecode(r io.Reader) (io.Reader, error) {
@@ -105,10 +140,12 @@ func HuffmanAdaptiveDecode(r io.Reader) (io.Reader, error) {
 	if err != nil {
 		return nil, err
 	}
+	stat := make(map[int]int)
+	stat[escape] = 0
 	return &HuffmanAdaptiveDecoder{
 		bitList:    list.New(),
 		buffer:     bufReader,
-		tree:       nil,
+		stat:       stat,
 		node:       nil,
 		last2Bytes: [2]byte{twoBytes[0], twoBytes[1]},
 	}, nil
@@ -117,8 +154,8 @@ func HuffmanAdaptiveDecode(r io.Reader) (io.Reader, error) {
 type HuffmanAdaptiveDecoder struct {
 	bitList    *list.List
 	buffer     *bufio.Reader
-	tree       *TNode
-	node       *TNode
+	stat       map[int]int
+	node       *TANode
 	isEOF      bool
 	last2Bytes [2]byte
 }
@@ -132,8 +169,13 @@ func (hd *HuffmanAdaptiveDecoder) Read(toFill []byte) (i int, err error) {
 		var b byte
 		b, err = hd.nextDecodedByte()
 		if err != nil {
+			if err != io.EOF {
+				return 0, err
+			}
 			break
 		}
+		hd.stat[int(b)]++
+		hd.node = AdaptiveHuffmanTreeFromStat(hd.stat)
 		toFill[i] = b
 		i++
 	}
@@ -142,6 +184,9 @@ func (hd *HuffmanAdaptiveDecoder) Read(toFill []byte) (i int, err error) {
 
 func (hd *HuffmanAdaptiveDecoder) nextDecodedByte() (byte, error) {
 	for {
+		if hd.node == nil {
+			return hd.nextByte()
+		}
 		b, err := hd.nextBit()
 		if err != nil {
 			return 0, err
@@ -152,11 +197,27 @@ func (hd *HuffmanAdaptiveDecoder) nextDecodedByte() (byte, error) {
 			hd.node = hd.node.Left
 		}
 		if hd.node.Left == nil && hd.node.Right == nil { //leaf
-			res := hd.node.Element
-			hd.node = hd.tree
-			return res, nil
+			if hd.node.Element == escape {
+				return hd.nextByte()
+			}
+			return byte(hd.node.Element), nil
 		}
 	}
+}
+
+func (hd *HuffmanAdaptiveDecoder) nextByte() (byte, error) {
+	var res byte
+	for i := 7; i >= 0; i-- {
+		nextBit, err := hd.nextBit()
+		if err != nil {
+			if err == io.EOF {
+				return 0, io.ErrUnexpectedEOF
+			}
+			return 0, err
+		}
+		res |= (byte(nextBit) << i)
+	}
+	return res, nil
 }
 
 func (hd *HuffmanAdaptiveDecoder) nextBit() (bit, error) {
@@ -192,4 +253,77 @@ func (hd *HuffmanAdaptiveDecoder) nextBit() (bit, error) {
 	res := nextPtr.Value.(bit)
 	hd.bitList.Remove(nextPtr)
 	return res, nil
+}
+
+type TANode struct {
+	Element int
+	Count   int
+	Left    *TANode
+	Right   *TANode
+}
+
+type AdaptivePriorityQueue struct {
+	list []*TANode
+}
+
+func (pq *AdaptivePriorityQueue) Insert(n *TANode) {
+	pq.list = append(pq.list, n)
+}
+
+func (pq *AdaptivePriorityQueue) ExtractMin() *TANode {
+	if len(pq.list) == 0 {
+		return nil
+	}
+	min := math.MaxInt64
+	var minNodeID int
+	for i, n := range pq.list {
+		if n.Count <= min {
+			min = n.Count
+			minNodeID = i
+		}
+	}
+	last := len(pq.list) - 1
+	pq.list[last], pq.list[minNodeID] = pq.list[minNodeID], pq.list[last]
+	res := pq.list[last]
+	pq.list = pq.list[:last]
+	return res
+}
+
+func StatToAdaptivePriorityQueue(stat map[int]int) *AdaptivePriorityQueue {
+	pq := AdaptivePriorityQueue{}
+	keys := make([]int, 0, len(stat))
+	for k := range stat {
+		keys = append(keys, k)
+	}
+	//to get the same trees
+	sort.Slice(keys, func(i, j int) bool {
+		return keys[i] > keys[j]
+	})
+	for _, k := range keys {
+		pq.Insert(&TANode{
+			Count:   stat[k],
+			Element: k,
+		})
+	}
+	return &pq
+}
+
+func AdaptiveHuffmanTreeFromStat(stat map[int]int) *TANode {
+	pq := StatToAdaptivePriorityQueue(stat)
+	for {
+		a := pq.ExtractMin()
+		b := pq.ExtractMin()
+		if b == nil {
+			if a.Left == nil && a.Right == nil { //if a is root
+				return &TANode{Right: a}
+			}
+			return a
+		}
+
+		pq.Insert(&TANode{
+			Count: a.Count + b.Count,
+			Right: a,
+			Left:  b,
+		})
+	}
 }

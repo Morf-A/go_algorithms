@@ -250,6 +250,9 @@ func (hd *HuffmanDecoder) Read(toFill []byte) (i int, err error) {
 		var b byte
 		b, err = hd.nextDecodedByte()
 		if err != nil {
+			if err != io.EOF {
+				return 0, err
+			}
 			break
 		}
 		toFill[i] = b
