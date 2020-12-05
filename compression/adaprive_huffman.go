@@ -210,9 +210,6 @@ func (hd *HuffmanAdaptiveDecoder) nextByte() (byte, error) {
 	for i := 7; i >= 0; i-- {
 		nextBit, err := hd.nextBit()
 		if err != nil {
-			if err == io.EOF {
-				return 0, io.ErrUnexpectedEOF
-			}
 			return 0, err
 		}
 		res |= (byte(nextBit) << i)

@@ -99,7 +99,7 @@ func HuffmanTreeFromStat(stat map[byte]int) *TNode {
 		a := pq.ExtractMin()
 		b := pq.ExtractMin()
 		if b == nil {
-			if a.Left == nil && a.Right == nil { //if a is root
+			if a != nil && a.Left == nil && a.Right == nil { //if a is root
 				return &TNode{Right: a}
 			}
 			return a
