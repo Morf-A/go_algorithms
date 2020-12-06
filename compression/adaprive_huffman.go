@@ -3,9 +3,9 @@ package compression
 //TODO: merge huffman and adaptive huffman, optimize table re-building
 import (
 	"bufio"
+	"container/heap"
 	"container/list"
 	"io"
-	"math"
 	"sort"
 )
 
@@ -263,31 +263,31 @@ type AdaptivePriorityQueue struct {
 	list []*TANode
 }
 
-func (pq *AdaptivePriorityQueue) Insert(n *TANode) {
-	pq.list = append(pq.list, n)
+func (pq *AdaptivePriorityQueue) Len() int {
+	return len(pq.list)
 }
 
-func (pq *AdaptivePriorityQueue) ExtractMin() *TANode {
-	if len(pq.list) == 0 {
-		return nil
-	}
-	min := math.MaxInt64
-	var minNodeID int
-	for i, n := range pq.list {
-		if n.Count <= min {
-			min = n.Count
-			minNodeID = i
-		}
-	}
-	last := len(pq.list) - 1
-	pq.list[last], pq.list[minNodeID] = pq.list[minNodeID], pq.list[last]
-	res := pq.list[last]
-	pq.list = pq.list[:last]
+func (pq *AdaptivePriorityQueue) Less(i, j int) bool {
+	return pq.list[i].Count < pq.list[j].Count
+}
+
+func (pq *AdaptivePriorityQueue) Swap(i, j int) {
+	pq.list[i], pq.list[j] = pq.list[j], pq.list[i]
+}
+
+func (pq *AdaptivePriorityQueue) Push(x interface{}) {
+	pq.list = append(pq.list, x.(*TANode))
+}
+
+func (pq *AdaptivePriorityQueue) Pop() interface{} {
+	n := len(pq.list)
+	res := pq.list[n-1]
+	pq.list = pq.list[:n-1]
 	return res
 }
 
 func StatToAdaptivePriorityQueue(stat map[int]int) *AdaptivePriorityQueue {
-	pq := AdaptivePriorityQueue{}
+	pq := &AdaptivePriorityQueue{}
 	keys := make([]int, 0, len(stat))
 	for k := range stat {
 		keys = append(keys, k)
@@ -297,19 +297,26 @@ func StatToAdaptivePriorityQueue(stat map[int]int) *AdaptivePriorityQueue {
 		return keys[i] > keys[j]
 	})
 	for _, k := range keys {
-		pq.Insert(&TANode{
+		heap.Push(pq, &TANode{
 			Count:   stat[k],
 			Element: k,
 		})
 	}
-	return &pq
+	return pq
+}
+
+func TryPop(pq heap.Interface) *TANode {
+	if pq.Len() == 0 {
+		return nil
+	}
+	return heap.Pop(pq).(*TANode)
 }
 
 func AdaptiveHuffmanTreeFromStat(stat map[int]int) *TANode {
 	pq := StatToAdaptivePriorityQueue(stat)
 	for {
-		a := pq.ExtractMin()
-		b := pq.ExtractMin()
+		a := TryPop(pq)
+		b := TryPop(pq)
 		if b == nil {
 			if a.Left == nil && a.Right == nil { //if a is root
 				return &TANode{Right: a}
@@ -317,7 +324,7 @@ func AdaptiveHuffmanTreeFromStat(stat map[int]int) *TANode {
 			return a
 		}
 
-		pq.Insert(&TANode{
+		heap.Push(pq, &TANode{
 			Count: a.Count + b.Count,
 			Right: a,
 			Left:  b,
