@@ -5,25 +5,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"os"
 	"strings"
 )
 
 func ExampleAdaptiveHuffman() {
-	// bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
-	// book := bytes.NewReader(bookBytes)
-
-	book, err := os.Open("text.txt")
-	if err != nil {
-		panic(err)
-	}
-	bookBytes, err := ioutil.ReadAll(book)
-	if err != nil {
-		panic(err)
-	}
-	if _, err := book.Seek(0, 0); err != nil {
-		panic(err)
-	}
+	bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
+	book := bytes.NewReader(bookBytes)
 
 	encoded := HuffmanAdaptiveEncode(book)
 
