@@ -5,7 +5,6 @@ import (
 	"container/list"
 	"encoding/binary"
 	"errors"
-	"fmt"
 	"io"
 )
 
@@ -57,7 +56,7 @@ func (lzwe *LZWEncoder) nextEncodedBytes() ([]byte, error) {
 			return nil, io.EOF
 		}
 		nextByte, err := lzwe.buffer.ReadByte()
-		if err == io.EOF { //flush maxSeq
+		if err == io.EOF && len(lzwe.maxSeq) > 0 { //flush maxSeq
 			lzwe.isEOF = true
 			code, ok := lzwe.seqLookUp[string(lzwe.maxSeq)]
 			if !ok {
@@ -79,13 +78,6 @@ func (lzwe *LZWEncoder) nextEncodedBytes() ([]byte, error) {
 			if !ok {
 				return nil, errors.New("Can`t find code by string " + string(lzwe.maxSeq[:len(lzwe.maxSeq)-1]))
 			}
-			fmt.Println(
-				"in: ",
-				string(lzwe.maxSeq[:len(lzwe.maxSeq)-1]),
-				"add:",
-				string(lzwe.maxSeq),
-				lzwe.maxCode,
-			)
 			lzwe.maxSeq = []byte{nextByte}
 			res := make([]byte, 4)
 			binary.BigEndian.PutUint32(res, code)
@@ -111,8 +103,6 @@ func LZWEncode(in io.Reader) io.Reader {
 
 type LZWDecoder struct {
 	byteList  *list.List
-	maxCode   uint32
-	seqLookUp map[string]uint32
 	sequences []string
 	buffer    *bufio.Reader
 	curSeq    string
@@ -164,10 +154,15 @@ func (lzwd *LZWDecoder) nextDecodedBytes() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	nextSeq := lzwd.sequences[nextCode]
-	lzwd.sequences = append(lzwd.sequences, lzwd.curSeq+string(nextSeq[0]))
+	var nextSeq string
+	if int(nextCode) > len(lzwd.sequences)-1 {
+		nextSeq = lzwd.curSeq + string(lzwd.curSeq[0])
+		lzwd.sequences = append(lzwd.sequences, nextSeq)
+	} else {
+		nextSeq = lzwd.sequences[nextCode]
+		lzwd.sequences = append(lzwd.sequences, lzwd.curSeq+string(nextSeq[0]))
+	}
 	res := []byte(lzwd.curSeq)
-	fmt.Println("out:", string(res), "add:", lzwd.curSeq+string(nextSeq[0]), len(lzwd.sequences)-1)
 	lzwd.curSeq = nextSeq
 	return res, nil
 }
@@ -190,19 +185,13 @@ func (lzwd *LZWDecoder) nextDecodedByte() (byte, error) {
 }
 
 func LZWDecode(in io.Reader) io.Reader {
-	seqLookUp := make(map[string]uint32)
 	var sequences []string
-	var code uint32 = 0
-	for code < 256 {
-		seqLookUp[string(code)] = code
+	for code := uint32(0); code < 256; code++ {
 		sequences = append(sequences, string(code))
-		code++
 	}
 	return &LZWDecoder{
 		buffer:    bufio.NewReader(in),
-		maxCode:   code,
 		byteList:  list.New(),
-		seqLookUp: seqLookUp,
 		sequences: sequences,
 	}
 }
