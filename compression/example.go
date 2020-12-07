@@ -8,19 +8,52 @@ import (
 	"strings"
 )
 
+func ExampleLZWAndHuffman() {
+	bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
+	book := bytes.NewReader(bookBytes)
+	encoded := LZWEncode(book)
+	encodedCopy := &bytes.Buffer{}
+
+	stat, err := ByteStatistic(io.TeeReader(encoded, encodedCopy))
+	if err != nil {
+		panic(err)
+	}
+
+	tree := HuffmanTreeFromStat(stat)
+
+	hEncoded := HuffmanEncode(encodedCopy, tree.ToTable())
+
+	hEncodedCopy := &bytes.Buffer{}
+	hDecoded, err := HuffmanDecode(io.TeeReader(hEncoded, hEncodedCopy), tree)
+	if err != nil {
+		panic(err)
+	}
+
+	decoded := LZWDecode(hDecoded)
+	original, err := ioutil.ReadAll(decoded)
+	if err != nil {
+		panic(err)
+	}
+	if bytes.Equal(original, bookBytes) {
+		fmt.Println("Equal")
+	} else {
+		fmt.Println("Not equal")
+	}
+	originalLen := len(original)
+	encodedLen := len(hEncodedCopy.Bytes())
+	fmt.Printf(
+		"%d -> %d %.2f%%\n",
+		originalLen,
+		encodedLen,
+		float64(encodedLen)*float64(100)/float64(originalLen),
+	)
+}
+
 func ExampleLZW() {
-	// bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
-	bookBytes := []byte("ABCDABC")
+	bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
 	book := bytes.NewReader(bookBytes)
 
 	encoded := LZWEncode(book)
-
-	// res, err := ioutil.ReadAll(encoded)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// fmt.Println(res)
-	// return
 
 	encodedCopy := &bytes.Buffer{}
 	decoded := LZWDecode(io.TeeReader(encoded, encodedCopy))
@@ -29,7 +62,6 @@ func ExampleLZW() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(string(original), string(bookBytes))
 	if bytes.Equal(original, bookBytes) {
 		fmt.Println("Equal")
 	} else {
