@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func ExampleZLW() {
+func ExampleLZW() {
 	// bookBytes := []byte("ACAAGGTAGGAAAATGCGAAAGCTTAATTGCGGGA")
 	bookBytes := []byte("ABCDABC")
 	book := bytes.NewReader(bookBytes)

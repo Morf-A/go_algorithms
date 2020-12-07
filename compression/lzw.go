@@ -5,6 +5,7 @@ import (
 	"container/list"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 )
 
@@ -78,6 +79,13 @@ func (lzwe *LZWEncoder) nextEncodedBytes() ([]byte, error) {
 			if !ok {
 				return nil, errors.New("Can`t find code by string " + string(lzwe.maxSeq[:len(lzwe.maxSeq)-1]))
 			}
+			fmt.Println(
+				"in: ",
+				string(lzwe.maxSeq[:len(lzwe.maxSeq)-1]),
+				"add:",
+				string(lzwe.maxSeq),
+				lzwe.maxCode,
+			)
 			lzwe.maxSeq = []byte{nextByte}
 			res := make([]byte, 4)
 			binary.BigEndian.PutUint32(res, code)
@@ -95,7 +103,7 @@ func LZWEncode(in io.Reader) io.Reader {
 	}
 	return &LZWEncoder{
 		buffer:    bufio.NewReader(in),
-		maxCode:   code,
+		maxCode:   code - 1,
 		byteList:  list.New(),
 		seqLookUp: seqLookUp,
 	}
@@ -107,7 +115,7 @@ type LZWDecoder struct {
 	seqLookUp map[string]uint32
 	sequences []string
 	buffer    *bufio.Reader
-	maxSeq    []byte
+	curSeq    string
 	isEOF     bool
 }
 
@@ -129,26 +137,39 @@ func (lzwd *LZWDecoder) Read(toFill []byte) (i int, err error) {
 
 func (lzwd *LZWDecoder) nextUint32() (uint32, error) {
 	intBytes := make([]byte, 4)
-	for i := 0; i < 4; i++ {
-		nextByte, err := lzwd.buffer.ReadByte()
-		if err != nil {
-			return 0, err
-		}
-		intBytes[i] = nextByte
+	_, err := io.ReadFull(lzwd.buffer, intBytes)
+	if err != nil {
+		return 0, err
 	}
 	return binary.BigEndian.Uint32(intBytes), nil
 }
 
 func (lzwd *LZWDecoder) nextDecodedBytes() ([]byte, error) {
+	if lzwd.isEOF {
+		return nil, io.EOF
+	}
+	if lzwd.curSeq == "" {
+		curCode, err := lzwd.nextUint32()
+		if err != nil {
+			return nil, err
+		}
+		lzwd.curSeq = lzwd.sequences[curCode]
+	}
+
 	nextCode, err := lzwd.nextUint32()
+	if err == io.EOF {
+		lzwd.isEOF = true
+		return []byte(lzwd.curSeq), nil
+	}
 	if err != nil {
 		return nil, err
 	}
-	if int(nextCode) > len(lzwd.sequences)-1 {
-		return []byte{0}, nil
-	}
-	seq := lzwd.sequences[nextCode]
-	return []byte(seq), nil
+	nextSeq := lzwd.sequences[nextCode]
+	lzwd.sequences = append(lzwd.sequences, lzwd.curSeq+string(nextSeq[0]))
+	res := []byte(lzwd.curSeq)
+	fmt.Println("out:", string(res), "add:", lzwd.curSeq+string(nextSeq[0]), len(lzwd.sequences)-1)
+	lzwd.curSeq = nextSeq
+	return res, nil
 }
 
 func (lzwd *LZWDecoder) nextDecodedByte() (byte, error) {
